@@ -1,0 +1,343 @@
+@page "/dashboard"
+@using SistemaGestionWeb.UI.Services
+@using SistemaGestionWeb.UI.Models
+@inject DataService DataSvc
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+    <div>
+        <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem;">Dashboard Analítico</h2>
+        <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Métricas de rendimiento y flujos de turnos en tiempo real.</p>
+    </div>
+    
+    <!-- Selector Dinámico de Organización -->
+    <div style="background-color: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="color: #94a3b8; font-weight: 600; font-size: 0.9rem;">Organización Activa:</span>
+            <select @onchange="CambiarOrganizacion" style="background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; outline: none;">
+                @if (listaOrganizaciones.Any())
+                {
+                    @foreach (var org in listaOrganizaciones)
+                    {
+                        <option value="@org.Id" selected="@(org.Id == orgActual)">@org.Nombre</option>
+                    }
+                }
+                else
+                {
+                    <option value="">No hay organizaciones autorizadas</option>
+                }
+            </select>
+        </div>
+        <span style="color: #94a3b8; font-size: 0.85rem;">Mostrando datos para: <strong style="color: #f8fafc;">@(listaOrganizaciones.FirstOrDefault(o => o.Id == orgActual)?.Nombre ?? "Ninguna")</strong></span>
+    </div>
+
+    @if (cargando)
+    {
+        <div style="background-color: #1e293b; border: 1px solid #334155; padding: 2rem; border-radius: 12px; text-align: center; color: #94a3b8;">
+            Cargando métricas operativas...
+        </div>
+    }
+    else
+    {
+        <!-- Fila de Tarjetas KPI -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Total Tareas</span>
+                <span style="font-size: 2rem; font-weight: 800; color: #f8fafc;">@totalTareas</span>
+            </div>
+
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Completadas</span>
+                <span style="font-size: 2rem; font-weight: 800; color: #4ade80;">@tareasCompletadas</span>
+            </div>
+
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Pendientes</span>
+                <span style="font-size: 2rem; font-weight: 800; color: #facc15;">@tareasPendientes</span>
+            </div>
+
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">% Cumplimiento Global</span>
+                <span style="font-size: 2rem; font-weight: 800; color: #38bdf8;">@porcentajeCumplimiento%</span>
+            </div>
+        </div>
+
+        <!-- Cumplimiento por Categoría -->
+        <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.5rem; border-radius: 12px; display: flex; flex-direction: column; gap: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">Cumplimiento por Categoría</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                @foreach (var cat in metricasCategorias)
+                {
+                    <div style="background: #0f172a; border: 1px solid #334155; padding: 1rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; color: #f8fafc;">@cat.NombreCategoria</span>
+                            <span style="font-weight: 700; color: #38bdf8;">@cat.Porcentaje%</span>
+                        </div>
+                        <div style="width: 100%; background: #334155; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="width: @(cat.Porcentaje)%; background: #38bdf8; height: 100%;"></div>
+                        </div>
+                        <span style="font-size: 0.8rem; color: #94a3b8;">@cat.Completadas de @cat.Total completadas</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Sección de Actividad Reciente -->
+        <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.5rem; border-radius: 12px; display: flex; flex-direction: column; gap: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">Últimos Registros Operativos</h3>
+
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; color: #f8fafc;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #334155; color: #94a3b8;">
+                        <th style="padding: 0.75rem;">Categoría</th>
+                        <th style="padding: 0.75rem;">Título</th>
+                        <th style="padding: 0.75rem;">Estado</th>
+                        <th style="padding: 0.75rem;">Fecha</th>
+                        @if (esAdminActual)
+                        {
+                            <th style="padding: 0.75rem; text-align: right;">Acciones</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tarea in ultimosRegistros)
+                    {
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <td style="padding: 0.75rem; font-weight: 600; color: #38bdf8;">
+                                @if (categoriasDict.TryGetValue(tarea.CategoriaId, out var catNombre))
+                                {
+                                    @catNombre
+                                }
+                                else
+                                {
+                                    @("General")
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;">@tarea.Titulo</td>
+                            <td style="padding: 0.75rem;">
+                                @if (tarea.EstadoId == 3)
+                                {
+                                    <span style="background: #dcfce7; color: #15803d; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;">Completado</span>
+                                }
+                                else
+                                {
+                                    <span style="background: #fef9c3; color: #ca8a04; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;">Pendiente</span>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem; color: #94a3b8;">@tarea.FechaCreacion.ToShortDateString()</td>
+                            
+                            @if (esAdminActual)
+                            {
+                                <td style="padding: 0.75rem; text-align: right;">
+                                    @if (tarea.EstadoId == 3)
+                                    {
+                                        <button style="background-color: #dcfce7; color: #15803d; border: 1px solid #475569; padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer;" 
+                                                @onclick="() => ArchivarTareaAsync(tarea.Id)">
+                                            Archivar
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button style="background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer;" 
+                                                @onclick="() => EliminarTareaModalAsync(tarea.Id)">
+                                            Eliminar
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private bool cargando = true;
+    private bool esAdminActual = true; 
+    private string orgActual = "";
+    private List<Organizacion> listaOrganizaciones = new();
+
+    private int totalTareas = 0;
+    private int tareasCompletadas = 0;
+    private int tareasPendientes = 0;
+    private int porcentajeCumplimiento = 0;
+
+    private Dictionary<int, string> categoriasDict = new();
+    private List<MetricaCategoria> metricasCategorias = new();
+    private List<Registro> ultimosRegistros = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosInicialesAsync();
+    }
+
+    private async Task CargarDatosInicialesAsync()
+    {
+        cargando = true;
+        try
+        {
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+
+            if (string.IsNullOrEmpty(idUsuarioActual) || !int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            listaOrganizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+
+            if (listaOrganizaciones != null && listaOrganizaciones.Any())
+            {
+                if (string.IsNullOrEmpty(orgActual) || !listaOrganizaciones.Any(o => o.Id == orgActual))
+                {
+                    orgActual = listaOrganizaciones.First().Id;
+                }
+                await CargarMetricasAsync();
+            }
+            else
+            {
+                listaOrganizaciones = new List<Organizacion>();
+                orgActual = string.Empty;
+                LimpiarMetricas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error Inicialización Dashboard]: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CambiarOrganizacion(ChangeEventArgs e)
+    {
+        orgActual = e.Value?.ToString() ?? "";
+        if (!string.IsNullOrEmpty(orgActual))
+        {
+            await CargarMetricasAsync();
+        }
+        else
+        {
+            LimpiarMetricas();
+        }
+    }
+
+    private async Task CargarMetricasAsync()
+    {
+        if (string.IsNullOrEmpty(orgActual)) return;
+
+        try
+        {
+            var listaCategorias = await DataSvc.ObtenerCategoriasAsync();
+            var listaRegistros = await DataSvc.ObtenerRegistrosActivosParaDashboardAsync(orgActual);
+
+            categoriasDict = listaCategorias.ToDictionary(c => c.Id, c => c.Nombre);
+
+            if (listaRegistros != null)
+            {
+                totalTareas = listaRegistros.Count;
+                tareasCompletadas = listaRegistros.Count(r => r.EstadoId == 3);
+                tareasPendientes = totalTareas - tareasCompletadas;
+                porcentajeCumplimiento = totalTareas > 0 ? (int)Math.Round((double)tareasCompletadas / totalTareas * 100) : 0;
+
+                metricasCategorias = listaRegistros
+                    .GroupBy(r => r.CategoriaId)
+                    .Select(g => new MetricaCategoria {
+                        NombreCategoria = categoriasDict.ContainsKey(g.Key) ? categoriasDict[g.Key] : "General",
+                        Total = g.Count(),
+                        Completadas = g.Count(r => r.EstadoId == 3),
+                        Porcentaje = g.Count() > 0 ? (int)Math.Round((double)g.Count(r => r.EstadoId == 3) / g.Count() * 100) : 0
+                    }).ToList();
+
+                ultimosRegistros = listaRegistros.OrderByDescending(r => r.Id).Take(5).ToList();
+            }
+            else
+            {
+                LimpiarMetricas();
+            }
+        }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine($"[Error al cargar métricas]: {ex.Message}"); 
+        }
+    }
+
+    private void LimpiarMetricas()
+    {
+        totalTareas = 0;
+        tareasCompletadas = 0;
+        tareasPendientes = 0;
+        porcentajeCumplimiento = 0;
+        metricasCategorias.Clear();
+        ultimosRegistros.Clear();
+    }
+
+    private async Task ArchivarTareaAsync(long tareaId)
+    {
+        bool exito = await DataSvc.ArchivarRegistroAsync((int)tareaId);
+        
+        if (exito)
+        {
+            await CargarMetricasAsync(); 
+            StateHasChanged();
+        }
+    }
+
+    private async Task EliminarTareaModalAsync(int idTarea)
+    {
+        bool exito = await DataSvc.EliminarTareaAsync(idTarea);
+        if (exito)
+        {
+            await CargarMetricasAsync();
+        }
+    }
+
+    private class MetricaCategoria
+    {
+        public string NombreCategoria { get; set; } = "";
+        public int Total { get; set; }
+        public int Completadas { get; set; }
+        public int Porcentaje { get; set; }
+    }
+    
+    private DateTime fechaInicio = DateTime.Today.AddDays(-30);
+    private DateTime fechaFin = DateTime.Today;
+
+    private async Task DescargarReporteExcel()
+    {
+        try
+        {
+            var todosLosRegistros = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgActual);
+
+            if (todosLosRegistros == null) return;
+
+            var registrosParaExportar = todosLosRegistros
+                .Where(r => r.FechaCreacion >= fechaInicio && r.FechaCreacion <= fechaFin.AddDays(1))
+                .ToList();
+
+            var csvContent = new System.Text.StringBuilder();
+            csvContent.AppendLine("ID;Categoria;Titulo;Estado;FechaCreacion");
+
+            foreach (var reg in registrosParaExportar)
+            {
+                csvContent.AppendLine($"{reg.Id};\"{reg.CategoriaId}\";\"{reg.Titulo}\";\"{reg.EstadoId}\";{reg.FechaCreacion}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());
+            var fileName = $"Reporte_Tareas_{orgActual}_{DateTime.Now:yyyyMMdd}.csv";
+            
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, Convert.ToBase64String(bytes));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al exportar: {ex.Message}");
+        }
+    }
+}

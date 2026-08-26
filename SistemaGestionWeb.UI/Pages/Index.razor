@@ -1,0 +1,55 @@
+@page "/landing"
+@page "/index"
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Tablero de Gestión Operativa</PageTitle>
+
+<div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+    
+    <!-- ENCABEZADO -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem;">Tablero de Gestión Operativa</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Control y seguimiento de turnos</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <button class="btn-primary" style="padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer;" @onclick='() => Navigation.NavigateTo("/nueva-tarea")'>
+                + Nueva Tarea
+            </button>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE RESUMEN -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+        <div class="card" style="background-color: #ffffff; padding: 1.25rem; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Tareas Pendientes</span>
+            <h3 style="font-size: 1.75rem; font-weight: 800; color: #2563eb; margin: 0.5rem 0 0 0;">12</h3>
+        </div>
+        <div class="card" style="background-color: #ffffff; padding: 1.25rem; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase;">En Proceso</span>
+            <h3 style="font-size: 1.75rem; font-weight: 800; color: #d97706; margin: 0.5rem 0 0 0;">5</h3>
+        </div>
+        <div class="card" style="background-color: #ffffff; padding: 1.25rem; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Completadas Hoy</span>
+            <h3 style="font-size: 1.75rem; font-weight: 800; color: #16a34a; margin: 0.5rem 0 0 0;">18</h3>
+        </div>
+    </div>
+
+    <!-- ACCESOS RÁPIDOS -->
+    <div class="card" style="background-color: #ffffff; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem;">Accesos Rápidos del Sistema</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button class="btn-outline-light" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #0f172a; font-weight: 600; cursor: pointer;" @onclick='() => Navigation.NavigateTo("/registros")'>Ver Todos los Registros</button>
+            <button class="btn-outline-light" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #0f172a; font-weight: 600; cursor: pointer;" @onclick='() => Navigation.NavigateTo("/perfilequipo")'>Gestionar Equipo y Perfil</button>
+            <button class="btn-outline-light" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #0f172a; font-weight: 600; cursor: pointer;" @onclick='() => Navigation.NavigateTo("/registroorganizacion")'>Administrar Organizaciones</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+}

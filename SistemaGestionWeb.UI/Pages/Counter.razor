@@ -1,0 +1,20 @@
+﻿@page "/counter"
+
+<div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h3 style="color: #0f172a; font-weight: 800; margin-bottom: 1rem;">Contador Operativo</h3>
+
+    <p style="font-size: 1.1rem; color: #334155; margin-bottom: 1rem;">Valor actual: <strong>@currentCount</strong></p>
+
+    <button class="btn btn-primary" @onclick="IncrementCount" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+        Incrementar Registro
+    </button>
+</div>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

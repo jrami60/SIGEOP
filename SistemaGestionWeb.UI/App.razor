@@ -1,0 +1,18 @@
+﻿@using SistemaGestionWeb.UI.Layout
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(EmptyLayout)">
+            <div class="container mt-5 text-center">
+                <h3>Página no encontrada</h3>
+                <p>La dirección no existe.</p>
+                <a href="/welcome" class="btn btn-primary">Ir al inicio</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

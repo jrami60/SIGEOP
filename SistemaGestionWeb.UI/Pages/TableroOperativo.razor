@@ -1,0 +1,176 @@
+@page "/tablero"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject DataService DataSvc
+
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+    
+    <!-- Cabecera y Selector Dinámico de Organizaciones -->
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <h2 style="font-weight: 800; color: #f8fafc; margin: 0;">Gestión De Tareas</h2>
+        <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Seguimiento de tareas operativas y entregables del equipo.</p>
+        
+        <div style="margin-top: 1rem; max-width: 350px;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Organización Activa:</label>
+            <select class="form-select" @onchange="CambiarOrganizacion" style="background-color: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem;">
+                @if (listaOrganizaciones != null && listaOrganizaciones.Any())
+                {
+                    @foreach (var org in listaOrganizaciones)
+                    {
+                        <option value="@org.Id" selected="@(org.Id == organizacionSeleccionada)">@org.Nombre</option>
+                    }
+                }
+                else
+                {
+                    <option value="">No hay organizaciones autorizadas</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- Checkbox Modo Administrador -->
+     <!--<div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+        <input type="checkbox" id="modoAdmin" @bind="modoAdmin" style="accent-color: #3b82f6; width: 18px; height: 18px;" />
+        <label for="modoAdmin" style="font-weight: 600; font-size: 0.9rem; cursor: pointer;">Modo Administrador</label>
+    </div>-->
+
+    <!-- Tarjetas de Resumen Dinámicas -->
+    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+        
+        <!-- Tarjeta Fija: Todos los Registros -->
+        <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: #94a3b8;">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                    <span style="font-weight: 600; color: #f8fafc;">Todos los Registros</span>
+                </div>
+                <span style="font-size: 1.25rem; font-weight: 700; color: #f8fafc;">@totalElementos elementos registrados</span>
+            </div>
+            <button @onclick="VerTodasTareas" style="background: transparent; border: none; color: #38bdf8; font-weight: 600; cursor: pointer; font-size: 1rem;">Ver</button>
+        </div>
+
+        <!-- Tarjetas Dinámicas basadas en la tabla public.categorias (Oculta las que tienen 0 tareas) -->
+        @if (listaCategorias != null)
+        {
+            @foreach (var cat in listaCategorias.Where(c => listaRegistrosActuales.Any(r => r.CategoriaId == c.Id)))
+            {
+                int cantidadTareas = listaRegistrosActuales.Count(r => r.CategoriaId == cat.Id);
+                string colorHex = string.IsNullOrEmpty(cat.ColorHex) ? "#3b82f6" : cat.ColorHex;
+                
+                <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <!-- Cuadrito de color dinámico según la tabla categorias -->
+                            <div style="width: 16px; height: 16px; background-color: @colorHex; border-radius: 4px;"></div>
+                            <span style="font-weight: 600; color: #f8fafc;">@cat.Nombre</span>
+                        </div>
+                        <span style="font-size: 1.1rem; color: #94a3b8;">@cantidadTareas tareas</span>
+                    </div>
+                    <button @onclick='() => VerCategoria(cat.Id)' style="background: transparent; border: none; color: @colorHex; font-weight: 600; cursor: pointer; font-size: 1rem;">Ver</button>
+                </div>
+            }
+        }
+
+    </div>
+</div>
+
+@code {
+    private bool modoAdmin = false;
+    private string organizacionSeleccionada = "";
+    private int totalElementos = 0;
+    
+    private List<Organizacion> listaOrganizaciones = new();
+    private IEnumerable<Registro> listaRegistrosActuales = new List<Registro>();
+    private IEnumerable<Categoria> listaCategorias = new List<Categoria>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+
+            if (string.IsNullOrEmpty(idUsuarioActual) || !int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            listaOrganizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+
+            if (listaOrganizaciones != null && listaOrganizaciones.Any())
+            {
+                organizacionSeleccionada = listaOrganizaciones.First().Id;
+                await CargarDatosOrganizacion(organizacionSeleccionada);
+            }
+            else
+            {
+                listaOrganizaciones = new List<Organizacion>();
+                organizacionSeleccionada = string.Empty;
+                totalElementos = 0;
+                listaRegistrosActuales = new List<Registro>();
+                listaCategorias = new List<Categoria>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al inicializar tablero: {ex.Message}");
+        }
+    }
+
+    private async Task CambiarOrganizacion(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            organizacionSeleccionada = e.Value.ToString() ?? "";
+            if (!string.IsNullOrEmpty(organizacionSeleccionada))
+            {
+                await CargarDatosOrganizacion(organizacionSeleccionada);
+            }
+        }
+    }
+
+    private async Task CargarDatosOrganizacion(string orgId)
+    {
+        if (string.IsNullOrEmpty(orgId)) return;
+
+        try
+        {
+            var registrosTotales = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgId);
+            
+            if (registrosTotales != null)
+            {
+                listaRegistrosActuales = registrosTotales.Where(r => r.EstadoId != 3).ToList();
+                totalElementos = listaRegistrosActuales.Count();
+            }
+            else
+            {
+                listaRegistrosActuales = new List<Registro>();
+                totalElementos = 0;
+            }
+
+            listaCategorias = await DataSvc.ObtenerCategoriasAsync(orgId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al consultar datos de la organización: {ex.Message}");
+        }
+        
+        StateHasChanged();
+    }
+
+    private void VerTodasTareas()
+    {
+        if (!string.IsNullOrEmpty(organizacionSeleccionada))
+        {
+            Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}");
+        }
+    }
+
+    private void VerCategoria(int categoriaId)
+    {
+        if (!string.IsNullOrEmpty(organizacionSeleccionada))
+        {
+            Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}&categoria={categoriaId}");
+        }
+    }
+}

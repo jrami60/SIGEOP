@@ -1,0 +1,348 @@
+@page "/registro-organizacion"
+@inject DataService DataSvc
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+    <h3 class="mb-4 font-weight-bold">Gestión de Organizaciones</h3>
+
+    <!-- Pestañas de Navegación -->
+    <div class="d-flex mb-4" style="border-bottom: 1px solid #334155;">
+        <button style="@ObtenerEstiloPestana(pestanaCrear)" @onclick="() => pestanaCrear = true">
+            Crear Organización
+        </button>
+        <button style="@ObtenerEstiloPestana(!pestanaCrear)" @onclick="() => pestanaCrear = false" class="ms-4">
+            Unirse con Código
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeFeedback))
+    {
+        <div class="alert @(esError ? "alert-danger" : "alert-success") py-2" role="alert">
+            @mensajeFeedback
+        </div>
+    }
+
+    @if (pestanaCrear)
+    {
+        <!-- SECCIÓN CREAR ORGANIZACIÓN -->
+        <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+            <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Registrar Nueva Organización</h5>
+            <div class="mb-3">
+                <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Nombre de la Organización</label>
+                <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="nombreNuevaOrg" placeholder="" />
+            </div>
+            <button class="btn btn-primary w-100 py-2 font-weight-bold" style="background-color: #2563eb; border: none;" @onclick="CrearOrganizacionAsync">
+                Registrar y Obtener Código
+            </button>
+        </div>
+    }
+    else
+    {
+        <!-- SECCIÓN UNIRSE CON CÓDIGO -->
+        <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+            <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Unirse a una Organizcion Existente</h5>
+            <div class="mb-3">
+                <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Código de Invitación</label>
+                <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="codigoIngresado" placeholder="Ej. ORG-1234" />
+            </div>
+            <button class="btn btn-success w-100 py-2 font-weight-bold" @onclick="UnirseConCodigoAsync">
+                Enviar Solicitud de Ingreso
+            </button>
+        </div>
+    }
+
+    <!-- SECCIÓN DE SOLICITUDES PENDIENTES (Visible solo si administra locales con solicitudes) -->
+    @if (solicitudesPendientes != null && solicitudesPendientes.Any())
+    {
+        <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #f59e0b; border-radius: 12px;">
+            <h5 class="mb-3 text-warning" style="font-size: 1.1rem; font-weight: 600;">Solicitudes de Ingreso Pendientes</h5>
+            @foreach (var sol in solicitudesPendientes)
+            {
+                var uIdStr = sol.ContainsKey("id_usuario") ? sol["id_usuario"]?.ToString() : "";
+                var oIdStr = sol.ContainsKey("organizacion_id") ? sol["organizacion_id"]?.ToString() : "";
+                
+                // Extraemos el nombre del usuario si viene embebido desde Supabase
+                string nombreUsuario = $"Usuario ID: {uIdStr}";
+                if (sol.TryGetValue("usuarios", out var usrObj) && usrObj is System.Text.Json.JsonElement elem)
+                {
+                    if (elem.ValueKind == System.Text.Json.JsonValueKind.Object && elem.TryGetProperty("nombre", out var nombreProp))
+                    {
+                        nombreUsuario = nombreProp.GetString() ?? nombreUsuario;
+                    }
+                }
+
+                var nombreOrg = misOrganizaciones.FirstOrDefault(o => o.Id == oIdStr)?.Nombre ?? "Local";
+
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary py-2 mb-2">
+                    <div>
+                        <span style="color: #cbd5e1;"><strong>@nombreUsuario</strong> solicita unirse a <strong>@nombreOrg</strong></span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-success me-2 px-3" @onclick="async () => await AprobarSolicitudAsync(uIdStr ?? string.Empty, oIdStr ?? string.Empty)">Aprobar</button>
+                        <button class="btn btn-sm btn-danger px-3" @onclick="async () => await RechazarSolicitudAsync(uIdStr ?? string.Empty, oIdStr ?? string.Empty)">Rechazar</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- LISTA DE ORGANIZACIONES DEL USUARIO -->
+    <h4 class="mt-5 mb-3 text-white" style="font-size: 1.25rem; font-weight: 600;">Mis Orgnizaciones</h4>
+
+    @if (misOrganizaciones == null || !misOrganizaciones.Any())
+    {
+        <p style="color: #94a3b8;">No estás asociado a ninguna organización actualmente.</p>
+    }
+    else
+    {
+        @foreach (var org in misOrganizaciones)
+        {
+            <div class="p-3 mb-3" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1" style="color: #38bdf8; font-size: 1.1rem; font-weight: 600;">@org.Nombre</h5>
+                        <small style="color: #94a3b8;">Código actual: <strong class="text-white">@org.Codigo</strong></small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3 px-2 py-1" style="background-color: #334155; color: #fff; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                            ROL: @org.Rol.ToUpper()
+                        </span>
+                        
+                        @if (org.EsAdmin)
+                        {
+                            <button class="btn btn-sm me-2 px-3" style="background-color: #0284c7; color: #fff; border: none; font-weight: 500;" @onclick="() => RegenerarCodigoAsync(org.Id)">
+                                Regenerar Código
+                            </button>
+                            <button class="btn btn-sm px-3" style="background-color: #ef4444; color: #fff; border: none; font-weight: 500;" @onclick="() => EliminarOrganizacion(org.Id)">
+                                Eliminar
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-warning px-3" @onclick="() => SalirDeOrganizacion(org.Id)">
+                                Salir
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool pestanaCrear = true;
+    private string nombreNuevaOrg = "";
+    private string codigoIngresado = "";
+    private string mensajeFeedback = "";
+    private bool esError = false;
+
+    private List<OrgViewModel> misOrganizaciones = new();
+    private List<Dictionary<string, object>> solicitudesPendientes = new();
+    private int usuarioIdActual = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosUsuarioAsync();
+    }
+
+    private async Task CargarDatosUsuarioAsync()
+    {
+        try
+        {
+            string idUsuarioActualStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            
+            if (int.TryParse(idUsuarioActualStr, out int uId))
+            {
+                usuarioIdActual = uId;
+                await CargarMisOrganizacionesAsync(uId);
+                await CargarSolicitudesPendientesAsync(uId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos del usuario: {ex.Message}");
+        }
+    }
+
+    private string ObtenerEstiloPestana(bool activo)
+    {
+        string color = activo ? "#38bdf8" : "#94a3b8";
+        string borde = activo ? "2px solid #38bdf8" : "none";
+        return $"background: none; border: none; color: {color}; font-weight: 700; padding-bottom: 0.5rem; cursor: pointer; border-bottom: {borde};";
+    }
+
+    private async Task CargarMisOrganizacionesAsync(int usuarioId)
+    {
+        var listaReal = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioId);
+        
+        misOrganizaciones = listaReal.Select(org => new OrgViewModel 
+        {
+            Id = org.Id.ToString(),
+            Nombre = org.Nombre,
+            Codigo = org.Codigo,
+            Rol = org.Rol ?? "miembro"
+        }).ToList();
+    }
+
+    private async Task CargarSolicitudesPendientesAsync(int usuarioId)
+    {
+        solicitudesPendientes = await DataSvc.ObtenerSolicitudesPendientesPorAdminAsync(usuarioId);
+    }
+
+    private async Task CrearOrganizacionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(nombreNuevaOrg))
+        {
+            mensajeFeedback = "Debes ingresar un nombre para la organización.";
+            esError = true;
+            return;
+        }
+
+        if (usuarioIdActual == 0)
+        {
+            mensajeFeedback = "No se encontró una sesión activa.";
+            esError = true;
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        bool creado = await DataSvc.CrearOrganizacionAsync(usuarioIdActual.ToString(), nombreNuevaOrg);
+
+        if (creado)
+        {
+            mensajeFeedback = "¡Organización creada con éxito!";
+            esError = false;
+            nombreNuevaOrg = "";
+            await CargarMisOrganizacionesAsync(usuarioIdActual);
+        }
+        else
+        {
+            mensajeFeedback = "Hubo un error al crear la organización en la base de datos.";
+            esError = true;
+        }
+    }
+
+    private async Task UnirseConCodigoAsync()
+    {
+        if (string.IsNullOrWhiteSpace(codigoIngresado))
+        {
+            mensajeFeedback = "Ingresa un código válido.";
+            esError = true;
+            return;
+        }
+
+        if (usuarioIdActual == 0)
+        {
+            mensajeFeedback = "No se encontró una sesión activa.";
+            esError = true;
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            bool unido = await DataSvc.UnirsePorCodigoAsync(usuarioIdActual.ToString(), codigoIngresado.Trim());
+
+            if (unido)
+            {
+                mensajeFeedback = "¡Solicitud de ingreso enviada con éxito! Quedas a la espera de que el administrador la apruebe.";
+                esError = false;
+                codigoIngresado = "";
+                await CargarMisOrganizacionesAsync(usuarioIdActual);
+            }
+            else
+            {
+                mensajeFeedback = "No se pudo encontrar una organización con ese código o ya estás asociado.";
+                esError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeFeedback = $"Error al unirse: {ex.Message}";
+            esError = true;
+        }
+    }
+
+    private async Task AprobarSolicitudAsync(string usuarioIdStr, string orgId)
+    {
+        if (int.TryParse(usuarioIdStr, out int uId))
+        {
+            bool aprobado = await DataSvc.ActualizarEstadoSolicitudAsync(uId, orgId, "miembro");
+            if (aprobado)
+            {
+                mensajeFeedback = "Solicitud aprobada correctamente.";
+                esError = false;
+                await CargarSolicitudesPendientesAsync(usuarioIdActual);
+            }
+            else
+            {
+                mensajeFeedback = "No se pudo aprobar la solicitud.";
+                esError = true;
+            }
+        }
+    }
+
+    private async Task RechazarSolicitudAsync(string usuarioIdStr, string orgId)
+    {
+        if (int.TryParse(usuarioIdStr, out int uId))
+        {
+            bool rechazado = await DataSvc.EliminarRelacionUsuarioOrganizacionAsync(uId.ToString(), orgId);
+            if (rechazado)
+            {
+                mensajeFeedback = "Solicitud rechazada.";
+                esError = false;
+                await CargarSolicitudesPendientesAsync(usuarioIdActual);
+            }
+            else
+            {
+                mensajeFeedback = "No se pudo rechazar la solicitud.";
+                esError = true;
+            }
+        }
+    }
+
+    private async Task RegenerarCodigoAsync(string idOrg)
+    {
+        mensajeFeedback = "Se ha generado un nuevo código de invitación exitosamente.";
+        esError = false;
+    }
+
+    private async Task SalirDeOrganizacion(string idOrg)
+    {
+        if (usuarioIdActual > 0)
+        {
+            bool salido = await DataSvc.EliminarRelacionUsuarioOrganizacionAsync(usuarioIdActual.ToString(), idOrg);
+            
+            if (salido)
+            {
+                mensajeFeedback = "Has salido de la organización correctamente.";
+                esError = false;
+                await CargarMisOrganizacionesAsync(usuarioIdActual);
+                await CargarSolicitudesPendientesAsync(usuarioIdActual);
+            }
+            else
+            {
+                mensajeFeedback = "No se pudo salir de la organización.";
+                esError = true;
+            }
+        }
+    }
+
+    private async Task EliminarOrganizacion(string idOrg)
+    {
+        await SalirDeOrganizacion(idOrg);
+    }
+
+    private class OrgViewModel
+    {
+        public string Id { get; set; } = "";
+        public string Nombre { get; set; } = "";
+        public string Codigo { get; set; } = "";
+        public string Rol { get; set; } = "";
+        public bool EsAdmin => !string.IsNullOrEmpty(Rol) && 
+                              (Rol.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
+                               Rol.Equals("administrador", StringComparison.OrdinalIgnoreCase));
+    }
+}

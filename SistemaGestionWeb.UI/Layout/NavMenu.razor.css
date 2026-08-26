@@ -1,0 +1,109 @@
+/* --- CONTENEDOR PRINCIPAL --- */
+.nav-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* --- CABECERA / MARCA --- */
+.nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0.5rem;
+}
+
+.brand-title {
+    color: #3b82f6;
+    font-weight: 800;
+    font-size: 1.4rem;
+    text-decoration: none !important;
+    letter-spacing: -0.5px;
+}
+
+.navbar-toggler-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* --- ENLACES DEL MENÚ --- */
+.nav-menu-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Estado normal de los enlaces */
+::deep .nav-item-link,
+.nav-item-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border: none !important;
+    background-color: transparent !important;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    outline: none !important;
+}
+
+/* Estado hover */
+::deep .nav-item-link:hover,
+.nav-item-link:hover {
+    color: #f8fafc !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- ESTADO ACTIVO (SELECCIONADO) --- */
+::deep .nav-item-link.active,
+::deep a.active,
+::deep .nav-link.active,
+.nav-item-link.active {
+    color: #ffffff !important;
+    background-color: #334155 !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
+::deep .nav-item-link:focus,
+::deep .nav-item-link:active,
+.nav-item-link:focus {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Botón de Cerrar Sesión */
+::deep .btn-logout:hover,
+.btn-logout:hover {
+    color: #f87171 !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* --- COMPORTAMIENTO MÓVIL --- */
+@media (max-width: 768px) {
+    .navbar-toggler-btn {
+        display: block;
+    }
+
+    .nav-scrollable.collapse {
+        display: none;
+    }
+
+    .nav-scrollable {
+        display: block;
+    }
+}

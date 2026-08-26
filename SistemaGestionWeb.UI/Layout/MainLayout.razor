@@ -1,0 +1,76 @@
+﻿@inherits LayoutComponentBase
+
+<style>
+    /* Estructura para PC*/
+    .layout-container {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #0f172a;
+        color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .layout-sidebar {
+        width: 280px;
+        min-width: 280px;
+        background-color: #1e293b;
+        border-right: 1px solid #334155;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    .layout-content {
+        flex: 1;
+        height: 100vh;
+        overflow-y: auto;
+        background-color: #0f172a;
+        display: flex;
+        flex-direction: column;
+    }
+    .layout-body-inner {
+        padding: 2.5rem;
+        flex: 1;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Estructura para Móviles */
+    @@media (max-width: 768px) {
+        .layout-container {
+            flex-direction: column;
+            height: auto;
+            overflow-y: auto;
+        }
+        .layout-sidebar {
+            width: 100%;
+            min-width: 100%;
+            height: auto;
+            max-height: 40vh;
+            border-right: none;
+            border-bottom: 1px solid #334155;
+        }
+        .layout-content {
+            height: auto;
+            overflow-y: visible;
+        }
+        .layout-body-inner {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="layout-container">
+    <!-- Barra lateral -->
+    <div class="layout-sidebar">
+        <NavMenu />
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="layout-content">
+        <div class="layout-body-inner">
+            @Body
+        </div>
+    </div>
+</div>

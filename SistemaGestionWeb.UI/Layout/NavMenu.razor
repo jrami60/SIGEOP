@@ -1,0 +1,74 @@
+﻿@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="nav-wrapper">
+    <div class="nav-header">
+        <a class="brand-title" href="">Gestion De Tareas</a>
+        <button type="button" class="navbar-toggler-btn" @onclick="ToggleNavMenu" aria-label="Toggle navigation">
+            <i class="bi @(collapseNavMenu ? "bi-list" : "bi-x-lg")"></i>
+        </button>
+    </div>
+
+    <div class="nav-scrollable @(collapseNavMenu ? "collapse" : "")" @onclick="ToggleNavMenu">
+        <nav class="flex-column nav-menu-links">
+             <NavLink class="nav-item-link" href="tablero" Match="NavLinkMatch.All">
+                <i class="bi bi-kanban me-2"></i>
+                <span>Tablero de Tareas</span>
+            </NavLink>
+
+            <NavLink class="nav-item-link" href="dashboard">
+                <i class="bi bi-bar-chart-line-fill me-2"></i>
+                <span>Dashboard / Métricas</span>
+            </NavLink>
+
+            <NavLink class="nav-item-link" href="registro-organizacion">
+                <i class="bi bi-folder-symlink-fill me-2"></i>
+                <span>Registro / Organización</span>
+            </NavLink>
+
+            <NavLink class="nav-item-link" href="perfilequipo">
+                <i class="bi bi-people-fill me-2"></i>
+                <span>Mi Perfil y Equipo</span>
+            </NavLink>
+
+            <NavLink class="nav-item-link" href="CrearTarea">
+                <i class="bi bi-plus-circle-fill me-2"></i>
+                <span>Crear Tarea</span>
+            </NavLink>
+
+            <div class="dropdown-divider my-2 border-secondary"></div>
+
+            <a href="/" class="nav-item-link btn-logout" style="text-decoration: none; display: flex; align-items: center;">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </nav>
+    </div>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task CerrarSesion()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_email");
+            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_autenticado");
+            await JS.InvokeVoidAsync("localStorage.removeItem", "usuarioActualId");
+            await JS.InvokeVoidAsync("localStorage.removeItem", "organizacionActivaId");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cerrar sesión: {ex.Message}");
+        }
+
+        // Te redirige al login limpio (sin barra lateral gracias al EmptyLayout)
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

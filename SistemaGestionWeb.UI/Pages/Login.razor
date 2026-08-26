@@ -1,0 +1,183 @@
+@page "/"
+@layout EmptyLayout
+@inject DataService DataSvc
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using System.ComponentModel.DataAnnotations
+
+<div style="background: #ffffff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 30px; width: 100%; max-width: 400px; box-sizing: border-box;">
+    
+    <!-- Pestañas Superiores Interactivas -->
+    <div style="display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 24px; cursor: pointer;">
+        <div @onclick="() => CambiarTab(true)" style="flex: 1; text-align: center; padding-bottom: 10px; border-bottom: @(esLogin ? "3px solid #2563eb" : "none"); margin-bottom: -2px;">
+            <span style="font-weight: 700; color: @(esLogin ? "#2563eb" : "#64748b"); font-size: 1rem;">Iniciar Sesión</span>
+        </div>
+        <div @onclick="() => CambiarTab(false)" style="flex: 1; text-align: center; padding-bottom: 10px; border-bottom: @(!esLogin ? "3px solid #2563eb" : "none"); margin-bottom: -2px;">
+            <span style="font-weight: 700; color: @(!esLogin ? "#2563eb" : "#64748b"); font-size: 1rem;">Crear Cuenta</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeAlerta))
+    {
+        <div style="padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 500; background-color: @(esExito ? "#f0fdf4" : "#fef2f2"); color: @(esExito ? "#166534" : "#991b1b"); border: 1px solid @(esExito ? "#bbf7d0" : "#fecaca"); display: flex; align-items: center; justify-content: space-between;">
+            <span>@mensajeAlerta</span>
+            <span @onclick="() => mensajeAlerta = string.Empty" style="cursor: pointer; font-weight: bold; margin-left: 10px;">&times;</span>
+        </div>
+    }
+
+    @if (esLogin)
+    {
+        <!-- FORMULARIO DE INICIAR SESIÓN -->
+        <EditForm Model="@modeloLogin" OnValidSubmit="ProcesarLogin">
+            <DataAnnotationsValidator />
+
+            <div style="margin-bottom: 20px; display: block;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Correo Electrónico</label>
+                <InputText @bind-Value="modeloLogin.Email" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;" placeholder="tu.correo@ejemplo.com" />
+                <ValidationMessage For="@(() => modeloLogin.Email)" style="color: #dc2626; font-size: 0.75rem; margin-top: 4px; display: block;" />
+            </div>
+
+            <div style="margin-bottom: 20px; display: block;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: #1e293b; margin: 0;">Contraseña</label>
+                    <a href="/forgot-password" style="font-size: 0.75rem; color: #2563eb; text-decoration: none;">¿Olvidaste tu contraseña?</a>
+                </div>
+                <InputText @bind-Value="modeloLogin.Password" type="password" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;" placeholder="••••••••" />
+                <ValidationMessage For="@(() => modeloLogin.Password)" style="color: #dc2626; font-size: 0.75rem; margin-top: 4px; display: block;" />
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" style="width: 100%; background-color: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">Ingresar a la Plataforma</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                <span style="color: #64748b; font-size: 0.85rem;">¿No tienes una cuenta operativa? </span>
+                <span @onclick="() => CambiarTab(false)" style="color: #2563eb; font-size: 0.85rem; text-decoration: none; font-weight: 700; cursor: pointer;">Regístrate aquí</span>
+            </div>
+        </EditForm>
+    }
+    else
+    {
+        <!-- FORMULARIO DE CREAR CUENTA -->
+        <EditForm Model="@modeloRegistro" OnValidSubmit="ProcesarRegistro">
+            <DataAnnotationsValidator />
+
+            <div style="margin-bottom: 16px; display: block;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Nombre Completo</label>
+                <InputText @bind-Value="modeloRegistro.Nombre" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;" placeholder="Ej. Juan Perez" />
+                <ValidationMessage For="@(() => modeloRegistro.Nombre)" style="color: #dc2626; font-size: 0.75rem; margin-top: 4px; display: block;" />
+            </div>
+
+            <div style="margin-bottom: 16px; display: block;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Correo Electrónico</label>
+                <InputText @bind-Value="modeloRegistro.Email" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;" placeholder="tu.correo@elemplo.com" />
+                <ValidationMessage For="@(() => modeloRegistro.Email)" style="color: #dc2626; font-size: 0.75rem; margin-top: 4px; display: block;" />
+            </div>
+
+            <div style="margin-bottom: 16px; display: block;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Contraseña</label>
+                <InputText @bind-Value="modeloRegistro.Password" type="password" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;" placeholder="******" />
+                <ValidationMessage For="@(() => modeloRegistro.Password)" style="color: #dc2626; font-size: 0.75rem; margin-top: 4px; display: block;" />
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="submit" style="width: 100%; background-color: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">Registrarse en el Sistema</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9;">
+                <span style="color: #64748b; font-size: 0.85rem;">¿Ya tienes una cuenta? </span>
+                <span @onclick="() => CambiarTab(true)" style="color: #2563eb; font-size: 0.85rem; text-decoration: none; font-weight: 700; cursor: pointer;">Inicia sesión aquí</span>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private bool esLogin = true;
+    private string mensajeAlerta = "";
+    private bool esExito = false;
+
+    private LoginDto modeloLogin = new();
+    private RegistroDto modeloRegistro = new();
+
+    private void CambiarTab(bool login)
+    {
+        esLogin = login;
+        mensajeAlerta = "";
+    }
+
+    private void MostrarMensaje(string mensaje, bool exito)
+    {
+        mensajeAlerta = mensaje;
+        esExito = exito;
+        StateHasChanged();
+    }
+
+    private async Task ProcesarLogin()
+    {
+        mensajeAlerta = "";
+        var usuario = await DataSvc.ObtenerUsuarioPorEmailAsync(modeloLogin.Email);
+
+        if (usuario == null)
+        {
+            MostrarMensaje("El correo electrónico no está registrado en la base de datos.", false);
+            return;
+        }
+
+        if (usuario.Password_hash == modeloLogin.Password)
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_id", usuario.Id.ToString());
+            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_email", usuario.Email);
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            MostrarMensaje("Contraseña incorrecta.", false);
+        }
+    }
+
+   private async Task ProcesarRegistro()
+    {
+        mensajeAlerta = "";
+
+        var usuarioExistente = await DataSvc.ObtenerUsuarioPorEmailAsync(modeloRegistro.Email);
+        if (usuarioExistente != null)
+        {
+            MostrarMensaje("Este correo electrónico ya está registrado.", false);
+            return;
+        }
+
+        bool exito = await DataSvc.RegistrarUsuarioAsync(modeloRegistro.Nombre, modeloRegistro.Email, modeloRegistro.Password);
+
+        if (exito)
+        {
+            MostrarMensaje("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", true);
+            modeloRegistro = new();
+        }
+        else
+        {
+            MostrarMensaje("Hubo un error al registrar el usuario en Supabase.", false);
+        }
+    }
+
+    public class LoginDto
+    {
+        [Required(ErrorMessage = "El email es obligatorio."), EmailAddress(ErrorMessage = "Formato de email inválido.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
+        public string Password { get; set; } = "";
+    }
+
+    public class RegistroDto
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El email es obligatorio."), EmailAddress(ErrorMessage = "Formato inválido.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
+        public string Password { get; set; } = "";
+    }
+}

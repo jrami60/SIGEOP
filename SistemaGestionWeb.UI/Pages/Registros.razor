@@ -1,0 +1,224 @@
+@page "/registros"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject DataService DataSvc
+
+
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-weight: 800; color: #f8fafc; margin: 0;">Detalle y Ejecución de Tareas</h2>
+        <button @onclick="VolverAlTablero" style="background-color: #334155; color: #f8fafc; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600;">Volver al Tablero</button>
+    </div>
+
+    @if (cargando)
+    {
+        <p style="color: #94a3b8;">Cargando tareas...</p>
+    }
+    else if (listaViewModel == null || !listaViewModel.Any())
+    {
+        <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; text-align: center;">
+            <p style="color: #94a3b8; margin: 0;">No hay tareas registradas para esta selección.</p>
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            @foreach (var vm in listaViewModel)
+            {
+                <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">ID Tarea: @vm.RegistroOriginal.Id</span>
+                            <h3 style="margin: 0.2rem 0; color: #f8fafc; font-size: 1.2rem;">@vm.RegistroOriginal.Titulo</h3>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.95rem;">@vm.RegistroOriginal.Descripcion</p>
+                        </div>
+                        <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; background-color: @ObtenerColorEstado(vm.EstadoActual); color: #fff;">
+                            @(string.IsNullOrEmpty(vm.EstadoActual) ? "Pendiente" : vm.EstadoActual)
+                        </span>
+                    </div>
+
+                    <!-- Si está pendiente, permitir pasar a En Curso -->
+                    @if (string.IsNullOrEmpty(vm.EstadoActual) || vm.EstadoActual == "Pendiente")
+                    {
+                        <button @onclick="() => CambiarAEnCurso(vm)" style="background-color: #3b82f6; color: white; border: none; border-radius: 8px; padding: 0.6rem; font-weight: 600; cursor: pointer;">
+                            Iniciar Tarea (En Curso)
+                        </button>
+                    }
+                    
+                    <!-- Si está En Curso, mostrar formulario de cierre -->
+                    @if (vm.EstadoActual == "En Curso")
+                    {
+                        <div style="border-top: 1px solid #334155; padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                            
+                            <div>
+                                <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Observaciones (Obligatorio):</label>
+                                <textarea @bind="vm.Observacion" placeholder="Escribe las observaciones del trabajo realizado..." style="width: 100%; background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; min-height: 80px; box-sizing: border-box;"></textarea>
+                            </div>
+
+                            <div>
+                                <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">
+                                    Evidencia Fotográfica @(vm.ExigeFoto ? "(Obligatoria)" : "(Opcional)"):
+                                </label>
+                                
+                                <InputFile OnChange="(e) => CargarArchivo(e, vm)" accept="image/*" style="color: #94a3b8; font-size: 0.9rem;" />
+
+                                @if (!string.IsNullOrEmpty(vm.FotoBase64))
+                                {
+                                    <div style="margin-top: 0.5rem;">
+                                        <img src="@vm.FotoBase64" alt="Evidencia" style="max-width: 150px; border-radius: 8px; border: 1px solid #334155;" />
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(vm.MensajeError))
+                            {
+                                <span style="color: #ef4444; font-size: 0.85rem; font-weight: 600;">@vm.MensajeError</span>
+                            }
+
+                            <button @onclick="() => FinalizarTarea(vm)" style="background-color: #10b981; color: white; border: none; border-radius: 8px; padding: 0.7rem; font-weight: 700; cursor: pointer;">
+                                Finalizar Tarea
+                            </button>
+                        </div>
+                    }
+
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "org")]
+    private string? orgParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "categoria")]
+    private string? categoriaParam { get; set; }
+
+    private List<RegistroViewModel> listaViewModel = new();
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cargando = true;
+            if (!string.IsNullOrEmpty(orgParam))
+            {
+                var todos = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgParam);
+                
+                if (todos != null)
+                {
+                    // FILTRO CLAVE: Excluimos las tareas completadas (id_estado == 3)
+                    var tareasActivas = todos.Where(r => r.EstadoId != 3).ToList();
+
+                    List<Registro> listaFiltrada;
+                    if (!string.IsNullOrEmpty(categoriaParam))
+                    {
+                        listaFiltrada = tareasActivas.Where(r => r.CategoriaId.ToString() == categoriaParam).ToList();
+                    }
+                    else
+                    {
+                        listaFiltrada = tareasActivas.ToList();
+                    }
+
+                    // Envolvemos cada registro en nuestro ViewModel para manejar la lógica visual
+                    listaViewModel = listaFiltrada.Select(r => new RegistroViewModel
+                    {
+                        RegistroOriginal = r,
+                        EstadoActual = "Pendiente",
+                        ExigeFoto = false
+                    }).ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando registros: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string ObtenerColorEstado(string estado) => estado switch
+    {
+        "Pendiente" => "#eab308",
+        "En Curso" => "#3b82f6",
+        "Finalizada" => "#10b981",
+        _ => "#64748b"
+    };
+
+    private async Task CambiarAEnCurso(RegistroViewModel vm)
+    {
+        vm.EstadoActual = "En Curso";
+        StateHasChanged();
+    }
+
+    private async Task CargarArchivo(InputFileChangeEventArgs e, RegistroViewModel vm)
+    {
+        try
+        {
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                var format = "image/jpeg";
+                var imageFile = await archivo.RequestImageFileAsync(format, 800, 600);
+                
+                using var buffer = imageFile.OpenReadStream(maxAllowedSize: 5120000);
+                using var ms = new MemoryStream();
+                await buffer.CopyToAsync(ms);
+                
+                var bytes = ms.ToArray();
+                vm.FotoBase64 = $"data:{format};base64,{Convert.ToBase64String(bytes)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.MensajeError = "Error al procesar la imagen.";
+            Console.WriteLine($"Error imagen: {ex.Message}");
+        }
+    }
+
+    private async Task FinalizarTarea(RegistroViewModel vm)
+    {
+        vm.MensajeError = "";
+
+        if (string.IsNullOrWhiteSpace(vm.Observacion))
+        {
+            vm.MensajeError = "La observación es obligatoria para finalizar la tarea.";
+            return;
+        }
+
+        try
+        {
+            await DataSvc.ActualizarEstadoRegistroAsync(vm.RegistroOriginal.Id, 3);
+
+            listaViewModel.Remove(vm);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            vm.MensajeError = $"Error al guardar: {ex.Message}";
+        }
+    }
+    private void VolverAlTablero()
+    {
+        Navigation.NavigateTo("/tablero");
+    }
+
+    public class RegistroViewModel
+    {
+        public Registro RegistroOriginal { get; set; } = new();
+        public string EstadoActual { get; set; } = "Pendiente";
+        public string Observacion { get; set; } = "";
+        public string FotoBase64 { get; set; } = "";
+        public bool ExigeFoto { get; set; } = false;
+        public string MensajeError { get; set; } = "";
+
+        
+    }
+}

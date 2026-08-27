@@ -154,7 +154,7 @@
 
 @code {
     private bool cargando = true;
-    private bool esAdminActual = true; 
+    private bool esAdminActual = false; // Ahora inicia en false por seguridad
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
 
@@ -193,12 +193,15 @@
                 {
                     orgActual = listaOrganizaciones.First().Id;
                 }
-                await CargarMetricasAsync();
+                
+                // Verificamos permisos y cargamos métricas para la organización activa
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
             }
             else
             {
                 listaOrganizaciones = new List<Organizacion>();
                 orgActual = string.Empty;
+                esAdminActual = false;
                 LimpiarMetricas();
             }
         }
@@ -217,12 +220,46 @@
         orgActual = e.Value?.ToString() ?? "";
         if (!string.IsNullOrEmpty(orgActual))
         {
-            await CargarMetricasAsync();
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
         }
         else
         {
+            esAdminActual = false;
             LimpiarMetricas();
         }
+    }
+
+    // Método centralizado para validar si es admin y cargar métricas
+    private async Task VerificarYCargarMetricasAsync(int usuarioIdInt)
+    {
+        try
+        {
+            var orgsUsuario = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+
+            var orgActualObj = orgsUsuario?.FirstOrDefault(o => o.Id == orgActual);
+
+            if (orgActualObj != null && 
+                !string.IsNullOrEmpty(orgActualObj.Rol) &&
+                (orgActualObj.Rol.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                orgActualObj.Rol.Equals("administrador", StringComparison.OrdinalIgnoreCase)))
+            {
+                esAdminActual = true;
+            }
+            else
+            {
+                esAdminActual = false;
+            }
+        }
+        catch
+        {
+            esAdminActual = false;
+        }
+
+        await CargarMetricasAsync();
     }
 
     private async Task CargarMetricasAsync()
@@ -281,7 +318,11 @@
         
         if (exito)
         {
-            await CargarMetricasAsync(); 
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
             StateHasChanged();
         }
     }
@@ -291,7 +332,11 @@
         bool exito = await DataSvc.EliminarTareaAsync(idTarea);
         if (exito)
         {
-            await CargarMetricasAsync();
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
         }
     }
 

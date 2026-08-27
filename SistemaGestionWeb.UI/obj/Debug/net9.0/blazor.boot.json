@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "SistemaGestionWeb.UI",
   "resources": {
-    "hash": "sha256-xl2hbDdx3xquO8h4FY7mg9J8wcdrhmKoP17tYrJcdYQ=",
+    "hash": "sha256-1Jb5q+Lt8um68bCFH+njji9o8myjiY7StqpHVe/KzEw=",
     "fingerprinting": {
       "Supabase.Functions.w4gz1z4ill.wasm": "Supabase.Functions.wasm",
       "Supabase.Gotrue.gsal9ee3gm.wasm": "Supabase.Gotrue.wasm",
@@ -217,8 +217,8 @@
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "SistemaGestionWeb.UI.7vjjc7eg0f.wasm": "SistemaGestionWeb.UI.wasm",
-      "SistemaGestionWeb.UI.89rqzhqmie.pdb": "SistemaGestionWeb.UI.pdb"
+      "SistemaGestionWeb.UI.zvp6jgkhf9.wasm": "SistemaGestionWeb.UI.wasm",
+      "SistemaGestionWeb.UI.dno8c2pbmn.pdb": "SistemaGestionWeb.UI.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.xto5am0qhx.js": "sha256-9e5Vqt0u8nYMGCHU4JfYqrYQExAw3bgi5UYzATgvoJE="
@@ -444,10 +444,10 @@
       "WindowsBase.5f1yvnaer4.wasm": "sha256-sZbAt8RTAmg0USTJj6J32jxvlakGs2AutNm/Bbr5Sc8=",
       "mscorlib.sx4ehutq6w.wasm": "sha256-gLaFs2FD2zCxDmOFrpTh9Y37En7r1yCv1BpjcPkFpgA=",
       "netstandard.ck9kwje9e5.wasm": "sha256-bNmBHwwBfUwMiL+sza9G3xQiNjeEtZksW9XVhj3ravI=",
-      "SistemaGestionWeb.UI.7vjjc7eg0f.wasm": "sha256-U9P+3RCbhpMK11zpawB22mrArBlzl+kYS+DleBTI0JQ="
+      "SistemaGestionWeb.UI.zvp6jgkhf9.wasm": "sha256-j3tIIXYU861k+fF5I5SdP+VhWiwTZePN/pe5KkyUnuU="
     },
     "pdb": {
-      "SistemaGestionWeb.UI.89rqzhqmie.pdb": "sha256-fBM0OZ/IxqQKbko+Bn4IGDI5241eyLs3lw0oBAAAJfQ="
+      "SistemaGestionWeb.UI.dno8c2pbmn.pdb": "sha256-yVJW1EKUbA1s74O2xSCgxI17RJLiin6zP0GJsv412Ig="
     }
   },
   "cacheBootResources": true,

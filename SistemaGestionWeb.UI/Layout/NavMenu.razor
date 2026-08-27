@@ -11,14 +11,19 @@
 
     <div class="nav-scrollable @(collapseNavMenu ? "collapse" : "")" @onclick="ToggleNavMenu">
         <nav class="flex-column nav-menu-links">
+            <NavLink class="nav-item-link" href="dashboard">
+                <i class="bi bi-bar-chart-line-fill me-2"></i>
+                <span>Dashboard / Métricas</span>
+            </NavLink>
+
              <NavLink class="nav-item-link" href="tablero" Match="NavLinkMatch.All">
                 <i class="bi bi-kanban me-2"></i>
                 <span>Tablero de Tareas</span>
             </NavLink>
 
-            <NavLink class="nav-item-link" href="dashboard">
-                <i class="bi bi-bar-chart-line-fill me-2"></i>
-                <span>Dashboard / Métricas</span>
+            <NavLink class="nav-item-link" href="CrearTarea">
+                <i class="bi bi-plus-circle-fill me-2"></i>
+                <span>Crear Tarea</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="registro-organizacion">
@@ -29,11 +34,6 @@
             <NavLink class="nav-item-link" href="perfilequipo">
                 <i class="bi bi-people-fill me-2"></i>
                 <span>Mi Perfil y Equipo</span>
-            </NavLink>
-
-            <NavLink class="nav-item-link" href="CrearTarea">
-                <i class="bi bi-plus-circle-fill me-2"></i>
-                <span>Crear Tarea</span>
             </NavLink>
 
             <div class="dropdown-divider my-2 border-secondary"></div>

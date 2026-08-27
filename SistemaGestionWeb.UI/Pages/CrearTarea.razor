@@ -4,7 +4,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box;">
     <!-- Cabecera -->
     <div style="margin-bottom: 2rem;">
         <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.5rem; font-size: 1.75rem;">Registrar Nueva Tarea Operativa</h2>
@@ -20,7 +20,7 @@
     }
 
     <!-- Contenedor del Formulario en Tarjeta -->
-    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); width: 100%; box-sizing: border-box;">
         
         @if (cargando)
         {
@@ -36,78 +36,75 @@
         }
         else
         {
-            <form @onsubmit="GuardarTareaAsync" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <form @onsubmit="GuardarTareaAsync" style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%; box-sizing: border-box;">
                 
-                <!-- Fila: Organización y Categoría -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Organización (Donde eres Admin)</label>
-                       
-                        <select @key="renderKey" @value="orgSeleccionadaId" @onchange="CambiarOrganizacion" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer;">
-                            <option value="">-- Selecciona una organización --</option>
-                            @foreach (var org in organizacionesAdmin)
+                <!-- Organización -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Organización (Donde eres Admin)</label>
+                    <select @key="renderKey" @value="orgSeleccionadaId" @onchange="CambiarOrganizacion" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; width: 100%; max-width: 100%; box-sizing: border-box; cursor: pointer;">
+                        <option value="">-- Selecciona una organización --</option>
+                        @foreach (var org in organizacionesAdmin)
+                        {
+                            <option value="@org.IdOrganizacion">@org.NombreOrganizacion</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Categoría de la Tarea + Botón Nueva (Se envuelven automáticamente si falta espacio) -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Categoría de la Tarea</label>
+                    <div style="display: flex; gap: 0.5rem; width: 100%; flex-wrap: wrap;">
+                        <select @bind="categoriaSeleccionadaId" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; flex: 1 1 200px; min-width: 0; box-sizing: border-box; cursor: pointer;">
+                            <option value="0">-- Selecciona una categoría --</option>
+                            @foreach (var cat in categoriasDisponibles)
                             {
-                                <option value="@org.IdOrganizacion">@org.NombreOrganizacion</option>
+                                <option value="@cat.Id">@cat.Nombre</option>
                             }
                         </select>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Categoría de la Tarea</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select @bind="categoriaSeleccionadaId" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; flex: 1; cursor: pointer;">
-                                <option value="0">-- Selecciona una categoría --</option>
-                                @foreach (var cat in categoriasDisponibles)
-                                {
-                                    <option value="@cat.Id">@cat.Nombre</option>
-                                }
-                            </select>
-                            <button type="button" @onclick="AbrirModalNuevaCategoria" style="background: #334155; color: #38bdf8; border: 1px solid #475569; padding: 0 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
-                                <i class="bi bi-plus-lg"></i> Nueva
-                            </button>
-                        </div>
+                        <button type="button" @onclick="AbrirModalNuevaCategoria" style="background: #334155; color: #38bdf8; border: 1px solid #475569; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.25rem; white-space: nowrap; flex: 0 0 auto;">
+                            <i class="bi bi-plus-lg"></i> Nueva
+                        </button>
                     </div>
                 </div>
 
                 <!-- Modal o Sección rápida para crear Categoría si está activa -->
                 @if (mostrandoInputCategoria)
                 {
-                    <div style="background: #0f172a; padding: 1rem; border: 1px solid #334155; border-radius: 8px; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        <input type="text" @bind="nuevaCategoriaNombre" placeholder="Nombre de nueva categoría..." style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 0.5rem; border-radius: 6px; flex: 1;" />
+                    <div style="background: #0f172a; padding: 1rem; border: 1px solid #334155; border-radius: 8px; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
+                        <input type="text" @bind="nuevaCategoriaNombre" placeholder="Nombre de nueva categoría..." style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 0.5rem; border-radius: 6px; flex: 1; min-width: 200px; box-sizing: border-box;" />
                         <button type="button" @onclick="CrearCategoriaAsync" style="background: #10b981; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer;">Guardar Categoría</button>
                         <button type="button" @onclick="() => mostrandoInputCategoria = false" style="background: #475569; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Cancelar</button>
                     </div>
                 }
 
-                <!-- Fila: Título y Prioridad -->
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start;">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Título de la Tarea</label>
-                        <input type="text" @bind="tituloTarea" placeholder="" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none;" />
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Prioridad</label>
-                        <select @bind="prioridadTarea" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer;">
-                            <option value="Normal">Normal</option>
-                            <option value="Alta">Alta</option>
-                            <option value="Urgente">Urgente</option>
-                        </select>
-                    </div>
+                <!-- Título de la Tarea -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Título de la Tarea</label>
+                    <input type="text" @bind="tituloTarea" placeholder="Ej: Revisión de stock..." style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; width: 100%; max-width: 100%; box-sizing: border-box;" />
                 </div>
 
-                <!-- Fila: Descripción -->
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- Prioridad -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Prioridad</label>
+                    <select @bind="prioridadTarea" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; width: 100%; max-width: 100%; box-sizing: border-box; cursor: pointer;">
+                        <option value="Normal">Normal</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Urgente">Urgente</option>
+                    </select>
+                </div>
+
+                <!-- Descripción -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                     <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Descripción y Detalles</label>
-                    <textarea @bind="descripcionTarea" rows="4" placeholder="Describa los detalles de la tarea..." style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; resize: vertical;"></textarea>
+                    <textarea @bind="descripcionTarea" rows="4" placeholder="Describa los detalles de la tarea..." style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; width: 100%; max-width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
                 </div>
 
                 <!-- Botones de Acción -->
-                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid #334155; padding-top: 1.5rem;">
-                    <button type="button" @onclick="Cancelar" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid #334155; padding-top: 1.5rem; flex-wrap: wrap; width: 100%;">
+                    <button type="button" @onclick="Cancelar" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; min-width: 120px;">
                         Cancelar
                     </button>
-                    <button type="submit" style="background: #38bdf8; color: #0f172a; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="submit" style="background: #38bdf8; color: #0f172a; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex: 1; min-width: 140px;">
                         <i class="bi bi-check-lg"></i> Guardar Tarea
                     </button>
                 </div>

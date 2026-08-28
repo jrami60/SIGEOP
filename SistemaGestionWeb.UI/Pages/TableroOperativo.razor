@@ -49,7 +49,6 @@
             <button @onclick="VerTodasTareas" style="background: transparent; border: none; color: #38bdf8; font-weight: 600; cursor: pointer; font-size: 1rem;">Ver</button>
         </div>
 
-        <!-- Tarjetas Dinámicas basadas en la tabla public.categorias (Oculta las que tienen 0 tareas) -->
         @if (listaCategorias != null)
         {
             @foreach (var cat in listaCategorias.Where(c => listaRegistrosActuales.Any(r => r.CategoriaId == c.Id)))

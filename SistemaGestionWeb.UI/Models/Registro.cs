@@ -33,6 +33,8 @@ public class Registro
 
     [JsonPropertyName("id_usuario")]
     public int? UsuarioId { get; set; }
+
+    public string? FotoReferenciaUrl { get; set; }
 }
 
 

@@ -14,6 +14,6 @@ namespace SistemaGestionWeb.UI.Models
         public string OrganizacionId { get; set; } = "";
 
         [JsonPropertyName("rol_en_org")]
-        public string RolEnOrg { get; set; } = ""; // 'admin', 'miembro', 'pendiente'
+        public string RolEnOrg { get; set; } = "";
     }
 }

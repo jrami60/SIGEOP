@@ -88,7 +88,7 @@ using SistemaGestionWeb.UI.Models
     #line hidden
     [global::Microsoft.AspNetCore.Components.LayoutAttribute(typeof(
 #nullable restore
-#line (2,9)-(2,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (4,9)-(4,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 MainLayout
 
 #line default
@@ -98,8 +98,28 @@ MainLayout
     [global::Microsoft.AspNetCore.Components.RouteAttribute(
     // language=Route,Component
 #nullable restore
-#line (1,7)-(1,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (1,7)-(1,21) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+"/crear-tarea"
+
+#line default
+#line hidden
+#nullable disable
+    )]
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (2,7)-(2,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 "/CrearTarea"
+
+#line default
+#line hidden
+#nullable disable
+    )]
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (3,7)-(3,38) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+"/crear-tarea/{IdRegistro:int}"
 
 #line default
 #line hidden
@@ -115,8 +135,12 @@ MainLayout
         }
         #pragma warning restore 1998
 #nullable restore
-#line (120,8)-(335,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (150,8)-(473,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 
+    [Parameter]
+    public int? IdRegistro { get; set; } 
+    private string? imagenPreviewUrl;
+    private string? imagenBase64;
     private int usuarioIdActual = 0;
     private bool cargando = true;
     private bool esError = false;
@@ -158,7 +182,21 @@ MainLayout
                     o.RolUsuarioActual.Equals("administrador", StringComparison.OrdinalIgnoreCase)
                 ).ToList();
 
-                if (organizacionesAdmin.Any())
+                // MODIFICADO: Si estamos editando, cargamos la tarea primero para saber su organización
+                if (IdRegistro.HasValue)
+                {
+                    var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync(IdRegistro.Value);
+                    if (tareaExistente != null)
+                    {
+                        orgSeleccionadaId = tareaExistente.OrganizacionId?.ToString() ?? "";
+                        await CargarCategoriasAsync();
+
+                        tituloTarea = tareaExistente.Titulo ?? "";
+                        descripcionTarea = tareaExistente.Descripcion ?? "";
+                        categoriaSeleccionadaId = tareaExistente.CategoriaId;
+                    }
+                }
+                else if (organizacionesAdmin.Any())
                 {
                     orgSeleccionadaId = organizacionesAdmin.First().IdOrganizacion.ToString();
                     await CargarCategoriasAsync();
@@ -180,7 +218,24 @@ MainLayout
     {
         orgSeleccionadaId = e.Value?.ToString() ?? "";
         categoriaSeleccionadaId = 0;
+        
+        // 1. Recargar las categorías de la nueva organización
         await CargarCategoriasAsync();
+
+        // 2. Cargar los usuarios miembros de esta organización específica
+        if (!string.IsNullOrEmpty(orgSeleccionadaId))
+        {
+            usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgSeleccionadaId);
+        }
+        else
+        {
+            usuariosOrganizacion.Clear();
+        }
+
+        // 3. Limpiar la selección de usuario anterior
+        usuarioAsignadoId = "";
+        
+        StateHasChanged();
     }
 
     private async Task CargarCategoriasAsync()
@@ -250,51 +305,115 @@ MainLayout
             esError = true;
         }
     }
+    private async Task ManejarSeleccionImagen(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                using var stream = archivo.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                var bytes = ms.ToArray();
+                imagenBase64 = Convert.ToBase64String(bytes);
+                imagenPreviewUrl = $"data:{archivo.ContentType};base64,{imagenBase64}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeFeedback = $"Error al procesar la imagen: {ex.Message}";
+            esError = true;
+        }
+    }
+
+    private void QuitarImagen()
+    {
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
+    }
 
     private async Task GuardarTareaAsync()
     {
         if (string.IsNullOrEmpty(orgSeleccionadaId) || 
-        categoriaSeleccionadaId == 0 || 
-        string.IsNullOrWhiteSpace(tituloTarea) || 
-        string.IsNullOrWhiteSpace(descripcionTarea))
-    {
-        mensajeFeedback = "Debes completar todos los campos obligatorios (Organización, Categoría, Título y Descripción).";
-        esError = true;
-        StateHasChanged(); 
+            categoriaSeleccionadaId == 0 || 
+            string.IsNullOrWhiteSpace(tituloTarea) || 
+            string.IsNullOrWhiteSpace(descripcionTarea))
+        {
+            mensajeFeedback = "Debes completar todos los campos obligatorios (Organización, Categoría, Título y Descripción).";
+            esError = true;
+            StateHasChanged(); 
 
-        await Task.Delay(3000);
+            await Task.Delay(3000);
 
-        mensajeFeedback = string.Empty;
-        esError = false;
-        StateHasChanged(); 
-        
-        return; 
-    }
+            mensajeFeedback = string.Empty;
+            esError = false;
+            StateHasChanged(); 
+            
+            return; 
+        }
 
         try
         {
-            var nuevaTarea = new Registro
-            {
-                Titulo = tituloTarea.Trim(),
-                Descripcion = descripcionTarea?.Trim() ?? "",
-                CategoriaId = categoriaSeleccionadaId,
-                OrganizacionId = orgSeleccionadaId,
-                EstadoId = 1
-            };
+            bool resultado = false;
 
-            bool guardado = await DataSvc.CrearTareaAsync(nuevaTarea);
-
-            if (guardado)
+            if (IdRegistro.HasValue)
             {
-                mensajeFeedback = "¡Tarea registrada con éxito!";
+                // MODO EDICIÓN: Creamos el objeto con el ID existente para actualizar
+                var tareaActualizar = new Registro
+                {
+                    Id = IdRegistro.Value,
+                    Titulo = tituloTarea.Trim(),
+                    Descripcion = descripcionTarea?.Trim() ?? "",
+                    CategoriaId = categoriaSeleccionadaId,
+                    OrganizacionId = orgSeleccionadaId,
+                    EstadoId = 1,
+                    FotoReferenciaUrl = imagenBase64
+                };
+
+                resultado = await DataSvc.ActualizarTareaAsync(tareaActualizar);
+            }
+            else
+            {
+                // MODO CREACIÓN: Objeto nuevo
+                var nuevaTarea = new Registro
+                {
+                    Titulo = tituloTarea.Trim(),
+                    Descripcion = descripcionTarea?.Trim() ?? "",
+                    CategoriaId = categoriaSeleccionadaId,
+                    OrganizacionId = orgSeleccionadaId,
+                    EstadoId = 1,
+                    UsuarioId = string.IsNullOrEmpty(usuarioAsignadoId) ? null : int.Parse(usuarioAsignadoId),
+                    FotoReferenciaUrl = imagenBase64
+                };
+                Console.WriteLine($"VALOR SELECCIONADO EN USUARIO: '{usuarioAsignadoId}'");
+
+                resultado = await DataSvc.CrearTareaAsync(nuevaTarea);
+            }
+
+            if (resultado)
+            {
+                mensajeFeedback = IdRegistro.HasValue ? "¡Tarea actualizada con éxito!" : "¡Tarea registrada con éxito!";
                 esError = false;
-                LimpiarFormulario();
+                
+                if (!IdRegistro.HasValue) 
+                {
+                    LimpiarFormulario();
+                }
+                
                 StateHasChanged(); 
 
                 await Task.Delay(2000);
 
                 mensajeFeedback = string.Empty;
                 StateHasChanged(); 
+
+                // Si estabas editando, opcionalmente puedes redirigir de vuelta al dashboard
+                if (IdRegistro.HasValue)
+                {
+                    Navigation.NavigateTo("/dashboard"); // Ajusta la ruta de tu dashboard si es distinta
+                }
             }
             else
             {
@@ -316,9 +435,17 @@ MainLayout
         prioridadTarea = "Normal";
         categoriaSeleccionadaId = 0;
     }
+
     private int renderKey = 0;
+    
     private void Cancelar()
     {
+        if (IdRegistro.HasValue)
+        {
+            Navigation.NavigateTo("/dashboard");
+            return;
+        }
+
         tituloTarea = string.Empty;
         descripcionTarea = string.Empty;
         orgSeleccionadaId = string.Empty;
@@ -326,11 +453,12 @@ MainLayout
         prioridadTarea = "Normal";
         mensajeFeedback = string.Empty;
         
-        
         renderKey++; 
-        
         StateHasChanged();
     }
+
+    private List<MiembroModel> usuariosOrganizacion = new(); // (O la clase que uses para tus usuarios)
+    private string? usuarioAsignadoId; // El ID del usuario seleccionado en el desplegable
 
 #line default
 #line hidden
@@ -338,7 +466,7 @@ MainLayout
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (5,9)-(5,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (7,9)-(7,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 IJSRuntime
 
 #line default
@@ -346,7 +474,7 @@ IJSRuntime
 #nullable disable
          
 #nullable restore
-#line (5,20)-(5,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (7,20)-(7,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 JS
 
 #line default
@@ -356,7 +484,7 @@ JS
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (4,9)-(4,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (6,9)-(6,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 NavigationManager
 
 #line default
@@ -364,7 +492,7 @@ NavigationManager
 #nullable disable
          
 #nullable restore
-#line (4,27)-(4,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (6,27)-(6,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 Navigation
 
 #line default
@@ -374,7 +502,7 @@ Navigation
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (3,9)-(3,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (5,9)-(5,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 DataService
 
 #line default
@@ -382,7 +510,7 @@ DataService
 #nullable disable
          
 #nullable restore
-#line (3,21)-(3,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (5,21)-(5,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 DataSvc
 
 #line default

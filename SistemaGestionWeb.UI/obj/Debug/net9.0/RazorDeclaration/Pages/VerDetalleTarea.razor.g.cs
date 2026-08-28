@@ -4,7 +4,7 @@
 #pragma warning disable 0649
 #pragma warning disable 0169
 
-namespace SistemaGestionWeb.UI.Layout
+namespace SistemaGestionWeb.UI.Pages
 {
     #line default
     using global::System;
@@ -86,8 +86,28 @@ using SistemaGestionWeb.UI.Models
     ;
     #line default
     #line hidden
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (1,7)-(1,36) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+"/ver-tarea/{IdRegistro:int}"
+
+#line default
+#line hidden
+#nullable disable
+    )]
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (2,7)-(2,38) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+"/ver-detalle/{IdRegistro:int}"
+
+#line default
+#line hidden
+#nullable disable
+    )]
     #nullable restore
-    public partial class NavMenu : global::Microsoft.AspNetCore.Components.ComponentBase
+    public partial class VerDetalleTarea : global::Microsoft.AspNetCore.Components.ComponentBase
     #nullable disable
     {
         #pragma warning disable 1998
@@ -96,56 +116,37 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (56,8)-(106,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (63,8)-(94,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
 
-    private bool collapseNavMenu = true;
-    private string nombreUsuario = "";
+    [Parameter]
+    public int IdRegistro { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private Registro? tarea;
+    private bool cargando = true;
+
+    protected override async Task OnParametersSetAsync()
     {
         try
         {
-            // Intentamos leer el nombre o el correo del usuario almacenado en localStorage
-            nombreUsuario = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_nombre");
-            
-            // Si no encuentra el nombre directo, puedes optar por mostrar parte del correo o una alternativa
-            if (string.IsNullOrEmpty(nombreUsuario))
+            cargando = true;
+            if (IdRegistro > 0)
             {
-                string correo = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_email");
-                if (!string.IsNullOrEmpty(correo))
-                {
-                    nombreUsuario = correo.Split('@')[0]; // Toma la parte antes del @ como nombre de usuario
-                }
+                tarea = await DataSvc.ObtenerRegistroPorIdAsync(IdRegistro);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar el nombre de usuario en el menú: {ex.Message}");
+            Console.WriteLine($"Error al cargar detalle: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 
-    private void ToggleNavMenu()
+    private void Volver()
     {
-        collapseNavMenu = !collapseNavMenu;
-    }
-
-    private async Task CerrarSesion()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_email");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_autenticado");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuarioActualId");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "organizacionActivaId");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_id");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_nombre");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cerrar sesión: {ex.Message}");
-        }
-
-        Navigation.NavigateTo("/login", forceLoad: true);
+        Navigation.NavigateTo("/dashboard");
     }
 
 #line default
@@ -154,16 +155,16 @@ using SistemaGestionWeb.UI.Models
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (2,9)-(2,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-IJSRuntime
+#line (4,9)-(4,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+NavigationManager
 
 #line default
 #line hidden
 #nullable disable
          
 #nullable restore
-#line (2,20)-(2,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-JS
+#line (4,27)-(4,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+Navigation
 
 #line default
 #line hidden
@@ -172,16 +173,16 @@ JS
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (1,9)-(1,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-NavigationManager
+#line (3,9)-(3,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+DataService
 
 #line default
 #line hidden
 #nullable disable
          
 #nullable restore
-#line (1,27)-(1,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-Navigation
+#line (3,21)-(3,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\VerDetalleTarea.razor"
+DataSvc
 
 #line default
 #line hidden

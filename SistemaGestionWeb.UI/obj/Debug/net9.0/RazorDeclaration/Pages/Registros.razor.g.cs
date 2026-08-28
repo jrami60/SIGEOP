@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (92,8)-(224,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Registros.razor"
+#line (89,8)-(248,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Registros.razor"
 
     [SupplyParameterFromQuery(Name = "org")]
     private string? orgParam { get; set; }
@@ -124,24 +124,43 @@ using SistemaGestionWeb.UI.Models
             cargando = true;
             if (!string.IsNullOrEmpty(orgParam))
             {
+                // 1. Obtenemos el ID del usuario actual
+                string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                int.TryParse(idUsuarioStr, out int usuarioActualId);
+
+                // 2. Verificamos si el usuario actual es administrador en esta organización
+                var miembrosOrg = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgParam);
+                var miembroActual = miembrosOrg.FirstOrDefault(m => m.IdUsuario == usuarioActualId);
+                bool esAdmin = miembroActual != null && 
+                               !string.IsNullOrEmpty(miembroActual.RolEnOrg) && 
+                               (miembroActual.RolEnOrg.Contains("admin", StringComparison.OrdinalIgnoreCase));
+
                 var todos = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgParam);
-                
+
                 if (todos != null)
                 {
-                    // FILTRO CLAVE: Excluimos las tareas completadas (id_estado == 3)
-                    var tareasActivas = todos.Where(r => r.EstadoId != 3).ToList();
+                    List<Registro> registrosPermitidos;
+                    if (esAdmin)
+                    {
+                        registrosPermitidos = todos.Where(r => r.EstadoId != 3).ToList();
+                    }
+                    else
+                    {
+                        registrosPermitidos = todos
+                            .Where(r => r.EstadoId != 3 && (r.UsuarioId == null || r.UsuarioId == usuarioActualId))
+                            .ToList();
+                    }
 
                     List<Registro> listaFiltrada;
                     if (!string.IsNullOrEmpty(categoriaParam))
                     {
-                        listaFiltrada = tareasActivas.Where(r => r.CategoriaId.ToString() == categoriaParam).ToList();
+                        listaFiltrada = registrosPermitidos.Where(r => r.CategoriaId.ToString() == categoriaParam).ToList();
                     }
                     else
                     {
-                        listaFiltrada = tareasActivas.ToList();
+                        listaFiltrada = registrosPermitidos.ToList();
                     }
 
-                    // Envolvemos cada registro en nuestro ViewModel para manejar la lógica visual
                     listaViewModel = listaFiltrada.Select(r => new RegistroViewModel
                     {
                         RegistroOriginal = r,
@@ -184,11 +203,11 @@ using SistemaGestionWeb.UI.Models
             {
                 var format = "image/jpeg";
                 var imageFile = await archivo.RequestImageFileAsync(format, 800, 600);
-                
+
                 using var buffer = imageFile.OpenReadStream(maxAllowedSize: 5120000);
                 using var ms = new MemoryStream();
                 await buffer.CopyToAsync(ms);
-                
+
                 var bytes = ms.ToArray();
                 vm.FotoBase64 = $"data:{format};base64,{Convert.ToBase64String(bytes)}";
             }
@@ -212,10 +231,19 @@ using SistemaGestionWeb.UI.Models
 
         try
         {
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                vm.RegistroOriginal.UsuarioId = usuarioIdInt;
+            }
+
+            vm.RegistroOriginal.Descripcion = vm.Observacion;
+            vm.RegistroOriginal.FotoUrl = vm.FotoBase64;
+
+            await DataSvc.ActualizarTareaAsync(vm.RegistroOriginal);
             await DataSvc.ActualizarEstadoRegistroAsync(vm.RegistroOriginal.Id, 3);
 
             listaViewModel.Remove(vm);
-            
             StateHasChanged();
         }
         catch (Exception ex)
@@ -223,6 +251,7 @@ using SistemaGestionWeb.UI.Models
             vm.MensajeError = $"Error al guardar: {ex.Message}";
         }
     }
+
     private void VolverAlTablero()
     {
         Navigation.NavigateTo("/tablero");
@@ -236,8 +265,6 @@ using SistemaGestionWeb.UI.Models
         public string FotoBase64 { get; set; } = "";
         public bool ExigeFoto { get; set; } = false;
         public string MensajeError { get; set; } = "";
-
-        
     }
 
 #line default

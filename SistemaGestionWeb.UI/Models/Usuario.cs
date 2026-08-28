@@ -15,7 +15,7 @@ public class Usuario
 
     [JsonPropertyName("password_hash")]
     public string Password_hash { get; set; } = string.Empty;
-    
+
     [JsonPropertyName("id_rol")]
     public int RolId { get; set; }
 }

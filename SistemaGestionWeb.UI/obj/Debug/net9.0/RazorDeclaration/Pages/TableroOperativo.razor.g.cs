@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (77,8)-(176,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\TableroOperativo.razor"
+#line (77,8)-(208,5) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\TableroOperativo.razor"
 
     private bool modoAdmin = false;
     private string organizacionSeleccionada = "";
@@ -168,11 +168,44 @@ using SistemaGestionWeb.UI.Models
 
         try
         {
+            string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            int.TryParse(idUsuarioStr, out int usuarioActualId);
+
+            var miembrosOrg = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgId);
+
+            var miembroActual = miembrosOrg.FirstOrDefault(m => m.IdUsuario == usuarioActualId);
+            
+            string rolLeido = miembroActual?.RolEnOrg ?? "NO ENCONTRADO EN LA LISTA";
+            Console.WriteLine($"[Validación Rol] Usuario ID {usuarioActualId} tiene el rol en BD: '{rolLeido}'");
+
+
+            bool esAdmin = miembroActual != null && 
+                        !string.IsNullOrEmpty(miembroActual.RolEnOrg) && 
+                        (miembroActual.RolEnOrg.Contains("admin", StringComparison.OrdinalIgnoreCase));
+
             var registrosTotales = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgId);
             
             if (registrosTotales != null)
             {
-                listaRegistrosActuales = registrosTotales.Where(r => r.EstadoId != 3).ToList();
+                Console.WriteLine($"[Tablero] Usuario actual ID: {usuarioActualId} | ¿Es Admin?: {esAdmin}");
+                Console.WriteLine($"[Tablero] Total tareas bajadas de Supabase: {registrosTotales.Count()}");
+                foreach (var r in registrosTotales)
+                {
+                    Console.WriteLine($"[Tarea ID {r.Id}] Titulo: {r.Titulo} | Asignada a UserID: '{r.UsuarioId}' | Estado: {r.EstadoId}");
+                }
+
+                if (esAdmin)
+                {
+                    listaRegistrosActuales = registrosTotales.Where(r => r.EstadoId != 3).ToList();
+                }
+                else
+                {
+                    listaRegistrosActuales = registrosTotales
+                    .Where(r => r.EstadoId != 3 && (r.UsuarioId == null || r.UsuarioId == usuarioActualId))
+                    .ToList();
+                }
+                
+                Console.WriteLine($"[Tablero] Tareas después del filtro: {listaRegistrosActuales.Count()}");
                 totalElementos = listaRegistrosActuales.Count();
             }
             else
@@ -190,22 +223,22 @@ using SistemaGestionWeb.UI.Models
         
         StateHasChanged();
     }
-
-    private void VerTodasTareas()
-    {
-        if (!string.IsNullOrEmpty(organizacionSeleccionada))
+        private void VerTodasTareas()
         {
-            Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}");
+            if (!string.IsNullOrEmpty(organizacionSeleccionada))
+            {
+                Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}");
+            }
         }
-    }
 
-    private void VerCategoria(int categoriaId)
-    {
-        if (!string.IsNullOrEmpty(organizacionSeleccionada))
+        private void VerCategoria(int categoriaId)
         {
-            Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}&categoria={categoriaId}");
+            if (!string.IsNullOrEmpty(organizacionSeleccionada))
+            {
+                Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}&categoria={categoriaId}");
+            }
         }
-    }
+    
 
 #line default
 #line hidden

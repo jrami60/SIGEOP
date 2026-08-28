@@ -106,10 +106,10 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (159,8)-(343,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+#line (188,8)-(471,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
 
     private bool cargando = true;
-    private bool esAdminActual = true; 
+    private bool esAdminActual = false;
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
 
@@ -122,7 +122,7 @@ using SistemaGestionWeb.UI.Models
     private List<MetricaCategoria> metricasCategorias = new();
     private List<Registro> ultimosRegistros = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         await CargarDatosInicialesAsync();
     }
@@ -148,12 +148,14 @@ using SistemaGestionWeb.UI.Models
                 {
                     orgActual = listaOrganizaciones.First().Id;
                 }
-                await CargarMetricasAsync();
+                
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
             }
             else
             {
                 listaOrganizaciones = new List<Organizacion>();
                 orgActual = string.Empty;
+                esAdminActual = false;
                 LimpiarMetricas();
             }
         }
@@ -172,12 +174,45 @@ using SistemaGestionWeb.UI.Models
         orgActual = e.Value?.ToString() ?? "";
         if (!string.IsNullOrEmpty(orgActual))
         {
-            await CargarMetricasAsync();
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
         }
         else
         {
+            esAdminActual = false;
             LimpiarMetricas();
         }
+    }
+
+    private async Task VerificarYCargarMetricasAsync(int usuarioIdInt)
+    {
+        try
+        {
+            var orgsUsuario = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+
+            var orgActualObj = orgsUsuario?.FirstOrDefault(o => o.Id == orgActual);
+
+            if (orgActualObj != null && 
+                !string.IsNullOrEmpty(orgActualObj.Rol) &&
+                (orgActualObj.Rol.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                orgActualObj.Rol.Equals("administrador", StringComparison.OrdinalIgnoreCase)))
+            {
+                esAdminActual = true;
+            }
+            else
+            {
+                esAdminActual = false;
+            }
+        }
+        catch
+        {
+            esAdminActual = false;
+        }
+
+        await CargarMetricasAsync();
     }
 
     private async Task CargarMetricasAsync()
@@ -186,6 +221,9 @@ using SistemaGestionWeb.UI.Models
 
         try
         {
+            string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            int.TryParse(idUsuarioStr, out int usuarioActualId);
+
             var listaCategorias = await DataSvc.ObtenerCategoriasAsync();
             var listaRegistros = await DataSvc.ObtenerRegistrosActivosParaDashboardAsync(orgActual);
 
@@ -193,12 +231,24 @@ using SistemaGestionWeb.UI.Models
 
             if (listaRegistros != null)
             {
-                totalTareas = listaRegistros.Count;
-                tareasCompletadas = listaRegistros.Count(r => r.EstadoId == 3);
+                List<Registro> registrosPermitidos;
+                if (esAdminActual)
+                {
+                    registrosPermitidos = listaRegistros.ToList();
+                }
+                else
+                {
+                    registrosPermitidos = listaRegistros
+                        .Where(r => r.UsuarioId == null || r.UsuarioId == usuarioActualId)
+                        .ToList();
+                }
+
+                totalTareas = registrosPermitidos.Count;
+                tareasCompletadas = registrosPermitidos.Count(r => r.EstadoId == 3);
                 tareasPendientes = totalTareas - tareasCompletadas;
                 porcentajeCumplimiento = totalTareas > 0 ? (int)Math.Round((double)tareasCompletadas / totalTareas * 100) : 0;
 
-                metricasCategorias = listaRegistros
+                metricasCategorias = registrosPermitidos
                     .GroupBy(r => r.CategoriaId)
                     .Select(g => new MetricaCategoria {
                         NombreCategoria = categoriasDict.ContainsKey(g.Key) ? categoriasDict[g.Key] : "General",
@@ -207,7 +257,7 @@ using SistemaGestionWeb.UI.Models
                         Porcentaje = g.Count() > 0 ? (int)Math.Round((double)g.Count(r => r.EstadoId == 3) / g.Count() * 100) : 0
                     }).ToList();
 
-                ultimosRegistros = listaRegistros.OrderByDescending(r => r.Id).Take(5).ToList();
+                ultimosRegistros = registrosPermitidos.OrderByDescending(r => r.Id).Take(5).ToList();
             }
             else
             {
@@ -236,9 +286,43 @@ using SistemaGestionWeb.UI.Models
         
         if (exito)
         {
-            await CargarMetricasAsync(); 
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
             StateHasChanged();
         }
+    }
+    private async Task CambiarEstadoPendienteAsync(long tareaId)
+    {
+        var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync((int)tareaId);
+
+        if (tareaExistente != null)
+        {
+            tareaExistente.EstadoId = 1;
+
+            bool exito = await DataSvc.ActualizarTareaAsync(tareaExistente);
+
+            if (exito)
+            {
+                string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+                {
+                    await VerificarYCargarMetricasAsync(usuarioIdInt);
+                }
+                StateHasChanged();
+            }
+        }
+    }
+    private void VerDetalleTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/ver-tarea/{(int)tareaId}");
+    }
+
+    private void IrAEditarTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/crear-tarea/{(int)tareaId}");
     }
 
     private async Task EliminarTareaModalAsync(int idTarea)
@@ -246,7 +330,11 @@ using SistemaGestionWeb.UI.Models
         bool exito = await DataSvc.EliminarTareaAsync(idTarea);
         if (exito)
         {
-            await CargarMetricasAsync();
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                await VerificarYCargarMetricasAsync(usuarioIdInt);
+            }
         }
     }
 
@@ -258,9 +346,7 @@ using SistemaGestionWeb.UI.Models
         public int Porcentaje { get; set; }
     }
     
-    private DateTime fechaInicio = DateTime.Today.AddDays(-30);
-    private DateTime fechaFin = DateTime.Today;
-
+    
     private DateTime fechaInicio = DateTime.Today.AddDays(-30);
     private DateTime fechaFin = DateTime.Today;
 
@@ -281,10 +367,8 @@ using SistemaGestionWeb.UI.Models
 
             foreach (var reg in registrosParaExportar)
             {
-                // Obtenemos el nombre real de la categoría desde el diccionario o usamos "General"
                 string nombreCategoria = categoriasDict.ContainsKey(reg.CategoriaId) ? categoriasDict[reg.CategoriaId] : "General";
 
-                // Traducción de EstadoId a texto descriptivo
                 string nombreEstado = reg.EstadoId switch
                 {
                     1 => "Pendiente",

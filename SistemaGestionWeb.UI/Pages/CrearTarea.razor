@@ -58,12 +58,12 @@
                         <option value="">-- Seleccionar Usuario (Opcional) --</option>
                         @foreach (var user in usuariosOrganizacion)
                         {
-                         <option value="@user.IdUsuario">@user.Nombre</option>
+                           <option value="@user.IdUsuario">@user.Nombre</option>
                         }
                     </InputSelect>
                 </div>
 
-                <!-- Categoría de la Tarea + Botón Nueva (Se envuelven automáticamente si falta espacio) -->
+                <!-- Categoría de la Tarea -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                     <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">Categoría de la Tarea</label>
                     <div style="display: flex; gap: 0.5rem; width: 100%; flex-wrap: wrap;">
@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <!-- Modal o Sección rápida para crear Categoría si está activa -->
+                <!-- Sección rápida para crear Categoría -->
                 @if (mostrandoInputCategoria)
                 {
                     <div style="background: #0f172a; padding: 1rem; border: 1px solid #334155; border-radius: 8px; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
@@ -112,6 +112,25 @@
                     <textarea @bind="descripcionTarea" rows="4" placeholder="Describa los detalles de la tarea..." style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; width: 100%; max-width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
                 </div>
 
+                <!-- Evidencia Fotográfica (Cámara / Galería) -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <label style="color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">
+                        <i class="bi bi-camera-fill me-1 text-info"></i> Evidencia Fotográfica (Opcional)
+                    </label>
+                    <InputFile OnChange="ManejarSeleccionImagen" accept="image/*" capture="environment" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; cursor: pointer;" />
+                    <small style="color: #94a3b8; font-size: 0.8rem;">Toma una foto con la cámara o selecciona una imagen existente.</small>
+
+                    @if (!string.IsNullOrEmpty(imagenPreviewUrl))
+                    {
+                        <div style="margin-top: 0.5rem; position: relative; display: inline-block; width: fit-content;">
+                            <img src="@imagenPreviewUrl" alt="Vista previa de evidencia" style="max-height: 160px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; object-fit: contain;" />
+                            <button type="button" @onclick="QuitarImagen" style="position: absolute; top: 5px; right: 5px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3);" title="Eliminar foto">
+                                <i class="bi bi-x-lg" style="font-size: 0.8rem;"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+
                 <!-- Botones de Acción -->
                 <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid #334155; padding-top: 1.5rem; flex-wrap: wrap; width: 100%;">
                     <button type="button" @onclick="Cancelar" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; min-width: 120px;">
@@ -126,10 +145,9 @@
         }
     </div>
 </div>
-
 @code {
     [Parameter]
-    public int? IdRegistro { get; set; } // <--- NUEVO: Recibe el ID si venimos a editar
+    public int? IdRegistro { get; set; }
 
     private int usuarioIdActual = 0;
     private bool cargando = true;
@@ -149,6 +167,10 @@
     private string tituloTarea = "";
     private string descripcionTarea = "";
     private string prioridadTarea = "Normal";
+
+    // Variables para la evidencia fotográfica
+    private string? imagenPreviewUrl;
+    private string? imagenBase64;
 
     protected override async Task OnInitializedAsync()
     {
@@ -172,7 +194,6 @@
                     o.RolUsuarioActual.Equals("administrador", StringComparison.OrdinalIgnoreCase)
                 ).ToList();
 
-                // MODIFICADO: Si estamos editando, cargamos la tarea primero para saber su organización
                 if (IdRegistro.HasValue)
                 {
                     var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync(IdRegistro.Value);
@@ -184,6 +205,15 @@
                         tituloTarea = tareaExistente.Titulo ?? "";
                         descripcionTarea = tareaExistente.Descripcion ?? "";
                         categoriaSeleccionadaId = tareaExistente.CategoriaId;
+                        
+                        // Recuperar foto existente al editar
+                        if (!string.IsNullOrEmpty(tareaExistente.FotoReferenciaUrl))
+                        {
+                            imagenBase64 = tareaExistente.FotoReferenciaUrl;
+                            imagenPreviewUrl = tareaExistente.FotoReferenciaUrl.StartsWith("data:") 
+                                ? tareaExistente.FotoReferenciaUrl 
+                                : $"data:image/jpeg;base64,{tareaExistente.FotoReferenciaUrl}";
+                        }
                     }
                 }
                 else if (organizacionesAdmin.Any())
@@ -209,10 +239,8 @@
         orgSeleccionadaId = e.Value?.ToString() ?? "";
         categoriaSeleccionadaId = 0;
         
-        // 1. Recargar las categorías de la nueva organización
         await CargarCategoriasAsync();
 
-        // 2. Cargar los usuarios miembros de esta organización específica
         if (!string.IsNullOrEmpty(orgSeleccionadaId))
         {
             usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgSeleccionadaId);
@@ -222,9 +250,7 @@
             usuariosOrganizacion.Clear();
         }
 
-        // 3. Limpiar la selección de usuario anterior
         usuarioAsignadoId = "";
-        
         StateHasChanged();
     }
 
@@ -245,6 +271,35 @@
         {
             Console.WriteLine($"Error al cargar categorías: {ex.Message}");
         }
+    }
+
+    private async Task ManejarSeleccionImagen(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                using var stream = archivo.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                var bytes = ms.ToArray();
+                imagenBase64 = Convert.ToBase64String(bytes);
+                imagenPreviewUrl = $"data:{archivo.ContentType};base64,{imagenBase64}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeFeedback = $"Error al procesar la imagen: {ex.Message}";
+            esError = true;
+        }
+    }
+
+    private void QuitarImagen()
+    {
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
     }
 
     private void AbrirModalNuevaCategoria()
@@ -322,7 +377,6 @@
 
             if (IdRegistro.HasValue)
             {
-                // MODO EDICIÓN: Creamos el objeto con el ID existente para actualizar
                 var tareaActualizar = new Registro
                 {
                     Id = IdRegistro.Value,
@@ -330,14 +384,14 @@
                     Descripcion = descripcionTarea?.Trim() ?? "",
                     CategoriaId = categoriaSeleccionadaId,
                     OrganizacionId = orgSeleccionadaId,
-                    EstadoId = 1
+                    EstadoId = 1,
+                    FotoReferenciaUrl = imagenBase64
                 };
 
                 resultado = await DataSvc.ActualizarTareaAsync(tareaActualizar);
             }
             else
             {
-                // MODO CREACIÓN: Objeto nuevo
                 var nuevaTarea = new Registro
                 {
                     Titulo = tituloTarea.Trim(),
@@ -345,9 +399,9 @@
                     CategoriaId = categoriaSeleccionadaId,
                     OrganizacionId = orgSeleccionadaId,
                     EstadoId = 1,
-                    UsuarioId = string.IsNullOrEmpty(usuarioAsignadoId) ? null : int.Parse(usuarioAsignadoId)
+                    UsuarioId = string.IsNullOrEmpty(usuarioAsignadoId) ? null : int.Parse(usuarioAsignadoId),
+                    FotoReferenciaUrl = imagenBase64
                 };
-                Console.WriteLine($"VALOR SELECCIONADO EN USUARIO: '{usuarioAsignadoId}'");
 
                 resultado = await DataSvc.CrearTareaAsync(nuevaTarea);
             }
@@ -369,10 +423,9 @@
                 mensajeFeedback = string.Empty;
                 StateHasChanged(); 
 
-                // Si estabas editando, opcionalmente puedes redirigir de vuelta al dashboard
                 if (IdRegistro.HasValue)
                 {
-                    Navigation.NavigateTo("/dashboard"); // Ajusta la ruta de tu dashboard si es distinta
+                    Navigation.NavigateTo("/dashboard");
                 }
             }
             else
@@ -394,6 +447,8 @@
         descripcionTarea = "";
         prioridadTarea = "Normal";
         categoriaSeleccionadaId = 0;
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
     }
 
     private int renderKey = 0;
@@ -412,11 +467,13 @@
         categoriaSeleccionadaId = 0;
         prioridadTarea = "Normal";
         mensajeFeedback = string.Empty;
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
         
         renderKey++; 
         StateHasChanged();
     }
 
-    private List<MiembroModel> usuariosOrganizacion = new(); // (O la clase que uses para tus usuarios)
-    private string? usuarioAsignadoId; // El ID del usuario seleccionado en el desplegable
+    private List<MiembroModel> usuariosOrganizacion = new();
+    private string? usuarioAsignadoId;
 }

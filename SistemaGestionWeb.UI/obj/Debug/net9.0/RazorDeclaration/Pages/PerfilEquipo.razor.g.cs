@@ -112,7 +112,7 @@ using System.Data.Common
         }
         #pragma warning restore 1998
 #nullable restore
-#line (147,8)-(288,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
+#line (137,8)-(278,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
 
     private int usuarioIdActual = 0;
     private string passwordActual = "";

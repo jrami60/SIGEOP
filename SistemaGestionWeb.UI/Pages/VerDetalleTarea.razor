@@ -1,0 +1,94 @@
+@page "/ver-tarea/{IdRegistro:int}"
+@page "/ver-detalle/{IdRegistro:int}"
+@inject DataService DataSvc
+@inject NavigationManager Navigation
+
+<div class="vista-container py-4" style="max-width: 900px; width: 100%; margin: 0 auto; padding: 2rem; box-sizing: border-box; color: #f8fafc;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-weight: 800; color: #f8fafc; margin: 0;">Detalle y Evidencia de Tarea</h2>
+        <button @onclick="Volver" style="background-color: #334155; color: #f8fafc; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600;">Volver</button>
+    </div>
+
+    @if (cargando)
+    {
+        <div style="background-color: #1e293b; border: 1px solid #334155; padding: 2rem; border-radius: 12px; text-align: center; color: #94a3b8;">
+            Cargando detalle de la tarea...
+        </div>
+    }
+    else if (tarea == null)
+    {
+        <div style="background-color: #1e293b; border: 1px solid #334155; padding: 2rem; border-radius: 12px; text-align: center; color: #ef4444;">
+            No se encontró el registro solicitado.
+        </div>
+    }
+    else
+    {
+        <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; box-sizing: border-box;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">ID Tarea: @tarea.Id</span>
+                    <h3 style="margin: 0.3rem 0; color: #f8fafc; font-size: 1.4rem; word-break: break-word;">@tarea.Titulo</h3>
+                </div>
+                <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; background-color: @(tarea.EstadoId == 3 ? "#10b981" : "#eab308"); color: #fff;">
+                    @(tarea.EstadoId == 3 ? "Completado" : "Pendiente")
+                </span>
+            </div>
+
+            <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem;">
+                <span style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Descripción / Observaciones del Trabajo:</span>
+                <p style="color: #f8fafc; margin: 0; white-space: pre-wrap; word-break: break-word;">@(string.IsNullOrEmpty(tarea.Descripcion) ? "Sin observaciones registradas." : tarea.Descripcion)</p>
+            </div>
+
+            <div>
+                <span style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.5rem; font-weight: 600;">Evidencia Fotográfica:</span>
+                
+                @if (!string.IsNullOrEmpty(tarea.FotoUrl))
+                {
+                    <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem; display: inline-block;">
+                        <img src="@tarea.FotoUrl" alt="Evidencia de la tarea" style="max-width: 100%; max-height: 450px; border-radius: 6px; display: block;" />
+                    </div>
+                }
+                else
+                {
+                    <p style="color: #64748b; font-style: italic; margin: 0;">No se adjuntó ninguna fotografía para este registro.</p>
+                }
+            </div>
+
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int IdRegistro { get; set; }
+
+    private Registro? tarea;
+    private bool cargando = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            cargando = true;
+            if (IdRegistro > 0)
+            {
+                tarea = await DataSvc.ObtenerRegistroPorIdAsync(IdRegistro);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar detalle: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/dashboard");
+    }
+}

@@ -215,8 +215,8 @@ C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_CJK.tjcz0u77k5.dat
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_EFIGS.tptq2av103.dat
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_no_CJK.lfu7j35m59.dat
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.zvp6jgkhf9.wasm
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.dno8c2pbmn.pdb
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.47hlc12x7c.wasm
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.j1r0vthaxe.pdb
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\blazor.boot.json
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\blazor.webassembly.js.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\Supabase.Functions.w4gz1z4ill.wasm.gz
@@ -435,8 +435,8 @@ C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_CJK.tjcz0u77k5.dat.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_EFIGS.tptq2av103.dat.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\icudt_no_CJK.lfu7j35m59.dat.gz
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.zvp6jgkhf9.wasm.gz
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.dno8c2pbmn.pdb.gz
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.47hlc12x7c.wasm.gz
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\SistemaGestionWeb.UI.j1r0vthaxe.pdb.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\wwwroot\_framework\blazor.boot.json.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\SistemaGestionWeb.UI.staticwebassets.runtime.json
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\bin\Debug\net9.0\SistemaGestionWeb.UI.staticwebassets.endpoints.json
@@ -1151,9 +1151,9 @@ C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\sucauqqqzc-tjcz0u77k5.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\7wum115pno-tptq2av103.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\9wg4xl6u2i-lfu7j35m59.gz
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\wwdujv2nuc-zvp6jgkhf9.gz
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\2uhpqe6zbt-dno8c2pbmn.gz
-C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\nkv26tj0i0-uhl997kjd8.gz
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\wwdujv2nuc-47hlc12x7c.gz
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\2uhpqe6zbt-j1r0vthaxe.gz
+C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\compressed\nkv26tj0i0-hhrwoogu8q.gz
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\staticwebassets.build.json.cache
 C:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\obj\Debug\net9.0\staticwebassets.development.json

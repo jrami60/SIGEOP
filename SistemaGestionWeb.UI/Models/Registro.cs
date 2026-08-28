@@ -28,6 +28,11 @@ public class Registro
     [JsonPropertyName("fecha_creacion")]
     public DateTime FechaCreacion { get; set; }
 
+    [JsonPropertyName("foto_url")]
+    public string? FotoUrl { get; set; }
+
+    [JsonPropertyName("id_usuario")]
+    public int? UsuarioId { get; set; }
 }
 
 

@@ -42,7 +42,7 @@ public class DataService
             // Consulta limpia que solo pide los campos directos de la tabla intermedia sin joins complejos que fallen
             string query = $"rest/v1/usuario_organizaciones?organizacion_id=eq.{organizacionId}&select=rol_en_org,id_usuario,usuarios!id_usuario(nombre)";
             var response = await _http.GetFromJsonAsync<List<MiembroModel>>(query, _jsonOptions);
-            
+
             var listaMiembros = response ?? new List<MiembroModel>();
 
             foreach (var miembro in listaMiembros)
@@ -88,7 +88,7 @@ public class DataService
         return await ObtenerTareasAsync(organizacionId);
     }
 
-    public async Task<bool> CrearTareaAsync(Registro tarea)
+   public async Task<bool> CrearTareaAsync(Registro tarea)
     {
         try
         {
@@ -104,7 +104,8 @@ public class DataService
                 descripcion = tarea.Descripcion,
                 id_categoria = tarea.CategoriaId,
                 id_estado = tarea.EstadoId > 0 ? tarea.EstadoId : 1,
-                organizacion_id = tarea.OrganizacionId 
+                organizacion_id = tarea.OrganizacionId,
+                id_usuario = tarea.UsuarioId // <--- ¡AQUÍ ESTABA FALTANDO!
             };
 
             var bodyJson = JsonSerializer.Serialize(payload);
@@ -116,7 +117,7 @@ public class DataService
             request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
             var response = await _http.SendAsync(request);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -141,10 +142,26 @@ public class DataService
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
             request.Headers.Add("Prefer", "return=representation");
 
-            var payload = new { id_estado = tarea.EstadoId };
+            var payload = new Dictionary<string, object?>
+            {
+                { "titulo", tarea.Titulo },
+                { "descripcion", tarea.Descripcion },
+                { "id_categoria", tarea.CategoriaId },
+                { "organizacion_id", tarea.OrganizacionId },
+                { "foto_url", tarea.FotoUrl },
+                { "id_estado", tarea.EstadoId } 
+            };
+
             request.Content = JsonContent.Create(payload);
 
             var response = await _http.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorDetails = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Error Supabase 400]: {errorDetails}");
+            }
+
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -153,7 +170,6 @@ public class DataService
             return false;
         }
     }
-
     public async Task<bool> ActualizarEstadoTareaAsync(int idTarea, int nuevoEstado)
     {
         try
@@ -238,7 +254,7 @@ public class DataService
         }
     }
 
-        public async Task<bool> EliminarCategoriaAsync(int idCategoria)
+    public async Task<bool> EliminarCategoriaAsync(int idCategoria)
     {
         try
         {
@@ -708,7 +724,7 @@ public class DataService
                 {
                     IdOrganizacion = org.Id,
                     NombreOrganizacion = org.Nombre,
-                    RolUsuarioActual = org.Rol ?? "miembro", 
+                    RolUsuarioActual = org.Rol ?? "miembro",
                     Miembros = miembros
                 });
             }
@@ -740,27 +756,29 @@ public class DataService
             return false;
         }
     }
-    public async Task ActualizarEstadoRegistroAsync(int idRegistro, int nuevoIdEstado)
+    public async Task<bool> ActualizarEstadoRegistroAsync(int idRegistro, int nuevoEstadoId)
     {
         try
         {
-            var datosActualizados = new
+            using var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"rest/v1/registros?id_registro=eq.{idRegistro}");
+            request.Headers.Add("apikey", SupabaseKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+            request.Headers.Add("Prefer", "return=representation");
+
+            var payload = new Dictionary<string, object?>
             {
-                id_estado = nuevoIdEstado
+                { "id_estado", nuevoEstadoId }
             };
 
-            var response = await _http.PatchAsJsonAsync($"rest/v1/registros?id_registro=eq.{idRegistro}", datosActualizados);
+            request.Content = JsonContent.Create(payload);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error al actualizar en Supabase: {errorContent}");
-            }
+            var response = await _http.SendAsync(request);
+            return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-            throw;
+            Console.WriteLine($"[Excepción al actualizar estado]: {ex.Message}");
+            return false;
         }
     }
     public async Task<Categoria?> CrearCategoriaAsync(string nombre, string colorHex, string organizacionId)
@@ -889,7 +907,7 @@ public class DataService
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
             string patchUrl = $"rest/v1/registros?id_registro=eq.{registroId}";
-            
+
             using var patchRequest = new HttpRequestMessage(HttpMethod.Patch, patchUrl);
             patchRequest.Headers.Add("apikey", SupabaseKey);
             patchRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
@@ -925,12 +943,12 @@ public class DataService
             return false;
         }
     }
-        public async Task<List<Registro>> ObtenerRegistrosActivosParaDashboardAsync(string organizacionId)
+    public async Task<List<Registro>> ObtenerRegistrosActivosParaDashboardAsync(string organizacionId)
     {
         try
         {
             string url = $"rest/v1/registros?organizacion_id=eq.{organizacionId}&archivado=eq.false&select=*";
-            
+
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("apikey", SupabaseKey);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
@@ -945,6 +963,55 @@ public class DataService
         {
             Console.WriteLine($"[Error]: {ex.Message}");
             return new List<Registro>();
+        }
+    }
+    public async Task<Registro?> ObtenerRegistroPorIdAsync(int id)
+    {
+        try
+        {
+            // Cambiado de id=eq a id_registro=eq para que coincida con tu tabla de Supabase
+            string url = $"rest/v1/registros?id_registro=eq.{id}&select=*";
+
+            var response = await _http.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var registros = await response.Content.ReadFromJsonAsync<List<Registro>>(_jsonOptions);
+                return registros?.FirstOrDefault();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener registro por ID: {ex.Message}");
+        }
+        return null;
+    }
+    public async Task<bool> ReabrirTareaCompletaAsync(Registro tarea)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"rest/v1/registros?id_registro=eq.{tarea.Id}");
+            request.Headers.Add("apikey", SupabaseKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+            request.Headers.Add("Prefer", "return=representation");
+
+            var payload = new Dictionary<string, object?>
+            {
+                { "id_estado", 1 },
+                { "titulo", tarea.Titulo },
+                { "descripcion", tarea.Descripcion },
+                { "id_categoria", tarea.CategoriaId },
+                { "organizacion_id", tarea.OrganizacionId },
+                { "foto_url", tarea.FotoUrl }
+            };
+
+            request.Content = JsonContent.Create(payload);
+            var response = await _http.SendAsync(request);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Excepción al reabrir tarea]: {ex.Message}");
+            return false;
         }
     }
 }

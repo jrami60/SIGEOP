@@ -261,6 +261,9 @@ using SistemaGestionWeb.UI.Models
     private DateTime fechaInicio = DateTime.Today.AddDays(-30);
     private DateTime fechaFin = DateTime.Today;
 
+    private DateTime fechaInicio = DateTime.Today.AddDays(-30);
+    private DateTime fechaFin = DateTime.Today;
+
     private async Task DescargarReporteExcel()
     {
         try
@@ -278,7 +281,19 @@ using SistemaGestionWeb.UI.Models
 
             foreach (var reg in registrosParaExportar)
             {
-                csvContent.AppendLine($"{reg.Id};\"{reg.CategoriaId}\";\"{reg.Titulo}\";\"{reg.EstadoId}\";{reg.FechaCreacion}");
+                // Obtenemos el nombre real de la categoría desde el diccionario o usamos "General"
+                string nombreCategoria = categoriasDict.ContainsKey(reg.CategoriaId) ? categoriasDict[reg.CategoriaId] : "General";
+
+                // Traducción de EstadoId a texto descriptivo
+                string nombreEstado = reg.EstadoId switch
+                {
+                    1 => "Pendiente",
+                    2 => "En Curso",
+                    3 => "Completado",
+                    _ => "Desconocido"
+                };
+
+                csvContent.AppendLine($"{reg.Id};\"{nombreCategoria}\";\"{reg.Titulo}\";\"{nombreEstado}\";{reg.FechaCreacion}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());

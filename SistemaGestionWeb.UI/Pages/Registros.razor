@@ -3,11 +3,10 @@
 @inject NavigationManager Navigation
 @inject DataService DataSvc
 
-
-<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem; box-sizing: border-box; overflow-x: hidden;">
     
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="font-weight: 800; color: #f8fafc; margin: 0;">Detalle y Ejecución de Tareas</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-weight: 800; color: #f8fafc; margin: 0; word-break: break-word;">Detalle y Ejecución de Tareas</h2>
         <button @onclick="VolverAlTablero" style="background-color: #334155; color: #f8fafc; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600;">Volver al Tablero</button>
     </div>
 
@@ -26,20 +25,19 @@
         <div style="display: flex; flex-direction: column; gap: 1rem;">
             @foreach (var vm in listaViewModel)
             {
-                <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; box-sizing: border-box; max-width: 100%;">
                     
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
                             <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">ID Tarea: @vm.RegistroOriginal.Id</span>
-                            <h3 style="margin: 0.2rem 0; color: #f8fafc; font-size: 1.2rem;">@vm.RegistroOriginal.Titulo</h3>
-                            <p style="color: #94a3b8; margin: 0; font-size: 0.95rem;">@vm.RegistroOriginal.Descripcion</p>
+                            <h3 style="margin: 0.2rem 0; color: #f8fafc; font-size: 1.2rem; word-break: break-word;">@vm.RegistroOriginal.Titulo</h3>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.95rem; word-break: break-word;">@vm.RegistroOriginal.Descripcion</p>
                         </div>
-                        <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; background-color: @ObtenerColorEstado(vm.EstadoActual); color: #fff;">
+                        <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; background-color: @ObtenerColorEstado(vm.EstadoActual); color: #fff; white-space: nowrap;">
                             @(string.IsNullOrEmpty(vm.EstadoActual) ? "Pendiente" : vm.EstadoActual)
                         </span>
                     </div>
 
-                    <!-- Si está pendiente, permitir pasar a En Curso -->
                     @if (string.IsNullOrEmpty(vm.EstadoActual) || vm.EstadoActual == "Pendiente")
                     {
                         <button @onclick="() => CambiarAEnCurso(vm)" style="background-color: #3b82f6; color: white; border: none; border-radius: 8px; padding: 0.6rem; font-weight: 600; cursor: pointer;">
@@ -47,7 +45,6 @@
                         </button>
                     }
                     
-                    <!-- Si está En Curso, mostrar formulario de cierre -->
                     @if (vm.EstadoActual == "En Curso")
                     {
                         <div style="border-top: 1px solid #334155; padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
@@ -62,7 +59,7 @@
                                     Evidencia Fotográfica @(vm.ExigeFoto ? "(Obligatoria)" : "(Opcional)"):
                                 </label>
                                 
-                                <InputFile OnChange="(e) => CargarArchivo(e, vm)" accept="image/*" style="color: #94a3b8; font-size: 0.9rem;" />
+                                <InputFile OnChange="(e) => CargarArchivo(e, vm)" accept="image/*" style="color: #94a3b8; font-size: 0.9rem; max-width: 100%;" />
 
                                 @if (!string.IsNullOrEmpty(vm.FotoBase64))
                                 {
@@ -106,24 +103,43 @@
             cargando = true;
             if (!string.IsNullOrEmpty(orgParam))
             {
+                // 1. Obtenemos el ID del usuario actual
+                string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                int.TryParse(idUsuarioStr, out int usuarioActualId);
+
+                // 2. Verificamos si el usuario actual es administrador en esta organización
+                var miembrosOrg = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgParam);
+                var miembroActual = miembrosOrg.FirstOrDefault(m => m.IdUsuario == usuarioActualId);
+                bool esAdmin = miembroActual != null && 
+                               !string.IsNullOrEmpty(miembroActual.RolEnOrg) && 
+                               (miembroActual.RolEnOrg.Contains("admin", StringComparison.OrdinalIgnoreCase));
+
                 var todos = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgParam);
-                
+
                 if (todos != null)
                 {
-                    // FILTRO CLAVE: Excluimos las tareas completadas (id_estado == 3)
-                    var tareasActivas = todos.Where(r => r.EstadoId != 3).ToList();
+                    List<Registro> registrosPermitidos;
+                    if (esAdmin)
+                    {
+                        registrosPermitidos = todos.Where(r => r.EstadoId != 3).ToList();
+                    }
+                    else
+                    {
+                        registrosPermitidos = todos
+                            .Where(r => r.EstadoId != 3 && (r.UsuarioId == null || r.UsuarioId == usuarioActualId))
+                            .ToList();
+                    }
 
                     List<Registro> listaFiltrada;
                     if (!string.IsNullOrEmpty(categoriaParam))
                     {
-                        listaFiltrada = tareasActivas.Where(r => r.CategoriaId.ToString() == categoriaParam).ToList();
+                        listaFiltrada = registrosPermitidos.Where(r => r.CategoriaId.ToString() == categoriaParam).ToList();
                     }
                     else
                     {
-                        listaFiltrada = tareasActivas.ToList();
+                        listaFiltrada = registrosPermitidos.ToList();
                     }
 
-                    // Envolvemos cada registro en nuestro ViewModel para manejar la lógica visual
                     listaViewModel = listaFiltrada.Select(r => new RegistroViewModel
                     {
                         RegistroOriginal = r,
@@ -166,11 +182,11 @@
             {
                 var format = "image/jpeg";
                 var imageFile = await archivo.RequestImageFileAsync(format, 800, 600);
-                
+
                 using var buffer = imageFile.OpenReadStream(maxAllowedSize: 5120000);
                 using var ms = new MemoryStream();
                 await buffer.CopyToAsync(ms);
-                
+
                 var bytes = ms.ToArray();
                 vm.FotoBase64 = $"data:{format};base64,{Convert.ToBase64String(bytes)}";
             }
@@ -194,10 +210,19 @@
 
         try
         {
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                vm.RegistroOriginal.UsuarioId = usuarioIdInt;
+            }
+
+            vm.RegistroOriginal.Descripcion = vm.Observacion;
+            vm.RegistroOriginal.FotoUrl = vm.FotoBase64;
+
+            await DataSvc.ActualizarTareaAsync(vm.RegistroOriginal);
             await DataSvc.ActualizarEstadoRegistroAsync(vm.RegistroOriginal.Id, 3);
 
             listaViewModel.Remove(vm);
-            
             StateHasChanged();
         }
         catch (Exception ex)
@@ -205,6 +230,7 @@
             vm.MensajeError = $"Error al guardar: {ex.Message}";
         }
     }
+
     private void VolverAlTablero()
     {
         Navigation.NavigateTo("/tablero");
@@ -218,7 +244,5 @@
         public string FotoBase64 { get; set; } = "";
         public bool ExigeFoto { get; set; } = false;
         public string MensajeError { get; set; } = "";
-
-        
     }
 }

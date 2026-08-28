@@ -10,6 +10,23 @@
         <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">Dashboard Analítico</h2>
         <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Métricas de rendimiento y flujos de turnos en tiempo real.</p>
     </div>
+
+    <!-- Sección de Filtros de Fecha y Botón de Descarga -->
+    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; margin-top: 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-sizing: border-box; width: 100%;">
+        <div>
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Inicio:</label>
+            <input type="date" @bind="fechaInicio" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
+        </div>
+        <div>
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Fin:</label>
+            <input type="date" @bind="fechaFin" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
+        </div>
+        <div>
+            <button @onclick="DescargarReporteExcel" style="background-color: #059669; color: white; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span>📥</span> Descargar Reporte (CSV)
+            </button>
+        </div>
+    </div>
     
     <!-- Selector Dinámico de Organización -->
     <div style="background-color: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; box-sizing: border-box; width: 100%;">
@@ -85,7 +102,7 @@
             </div>
         </div>
 
-        <!-- Sección de Actividad Reciente -->
+       <!-- Sección de Actividad Reciente -->
         <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; box-sizing: border-box; width: 100%; max-width: 100%;">
             <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc; word-break: break-word;">Últimos Registros Operativos</h3>
 
@@ -127,17 +144,33 @@
                         <!-- Acciones (Si es admin) -->
                         @if (esAdminActual)
                         {
-                            <div style="border-top: 1px solid #334155; padding-top: 0.75rem; display: flex; justify-content: flex-end; align-items: center; width: 100%; box-sizing: border-box;">
+                            <div style="border-top: 1px solid #334155; padding-top: 0.75rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
                                 @if (tarea.EstadoId == 3)
                                 {
-                                    <button style="background-color: #dcfce7; color: #15803d; border: 1px solid #475569; padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; box-sizing: border-box;" 
+                                    <!-- Botón para revisar/ver detalle antes de auditar -->
+                                    <button style="background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
+                                            @onclick="() => VerDetalleTarea(tarea.Id)">
+                                        Ver Detalle
+                                    </button>
+
+                                    <button style="background-color: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
+                                            @onclick="() => CambiarEstadoPendienteAsync(tarea.Id)">
+                                        Reabrir
+                                    </button>
+
+                                    <button style="background-color: #dcfce7; color: #15803d; border: 1px solid #475569; padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
                                             @onclick="() => ArchivarTareaAsync(tarea.Id)">
                                         Archivar
                                     </button>
                                 }
                                 else
                                 {
-                                    <button style="background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; box-sizing: border-box;" 
+                                    <button style="background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
+                                            @onclick="() => IrAEditarTarea(tarea.Id)">
+                                        Editar
+                                    </button>
+
+                                    <button style="background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
                                             @onclick="() => EliminarTareaModalAsync(tarea.Id)">
                                         Eliminar
                                     </button>
@@ -154,7 +187,7 @@
 
 @code {
     private bool cargando = true;
-    private bool esAdminActual = false; // Ahora inicia en false por seguridad
+    private bool esAdminActual = false;
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
 
@@ -167,7 +200,7 @@
     private List<MetricaCategoria> metricasCategorias = new();
     private List<Registro> ultimosRegistros = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         await CargarDatosInicialesAsync();
     }
@@ -194,7 +227,6 @@
                     orgActual = listaOrganizaciones.First().Id;
                 }
                 
-                // Verificamos permisos y cargamos métricas para la organización activa
                 await VerificarYCargarMetricasAsync(usuarioIdInt);
             }
             else
@@ -233,7 +265,6 @@
         }
     }
 
-    // Método centralizado para validar si es admin y cargar métricas
     private async Task VerificarYCargarMetricasAsync(int usuarioIdInt)
     {
         try
@@ -268,6 +299,9 @@
 
         try
         {
+            string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            int.TryParse(idUsuarioStr, out int usuarioActualId);
+
             var listaCategorias = await DataSvc.ObtenerCategoriasAsync();
             var listaRegistros = await DataSvc.ObtenerRegistrosActivosParaDashboardAsync(orgActual);
 
@@ -275,12 +309,24 @@
 
             if (listaRegistros != null)
             {
-                totalTareas = listaRegistros.Count;
-                tareasCompletadas = listaRegistros.Count(r => r.EstadoId == 3);
+                List<Registro> registrosPermitidos;
+                if (esAdminActual)
+                {
+                    registrosPermitidos = listaRegistros.ToList();
+                }
+                else
+                {
+                    registrosPermitidos = listaRegistros
+                        .Where(r => r.UsuarioId == null || r.UsuarioId == usuarioActualId)
+                        .ToList();
+                }
+
+                totalTareas = registrosPermitidos.Count;
+                tareasCompletadas = registrosPermitidos.Count(r => r.EstadoId == 3);
                 tareasPendientes = totalTareas - tareasCompletadas;
                 porcentajeCumplimiento = totalTareas > 0 ? (int)Math.Round((double)tareasCompletadas / totalTareas * 100) : 0;
 
-                metricasCategorias = listaRegistros
+                metricasCategorias = registrosPermitidos
                     .GroupBy(r => r.CategoriaId)
                     .Select(g => new MetricaCategoria {
                         NombreCategoria = categoriasDict.ContainsKey(g.Key) ? categoriasDict[g.Key] : "General",
@@ -289,7 +335,7 @@
                         Porcentaje = g.Count() > 0 ? (int)Math.Round((double)g.Count(r => r.EstadoId == 3) / g.Count() * 100) : 0
                     }).ToList();
 
-                ultimosRegistros = listaRegistros.OrderByDescending(r => r.Id).Take(5).ToList();
+                ultimosRegistros = registrosPermitidos.OrderByDescending(r => r.Id).Take(5).ToList();
             }
             else
             {
@@ -326,6 +372,36 @@
             StateHasChanged();
         }
     }
+    private async Task CambiarEstadoPendienteAsync(long tareaId)
+    {
+        var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync((int)tareaId);
+
+        if (tareaExistente != null)
+        {
+            tareaExistente.EstadoId = 1;
+
+            bool exito = await DataSvc.ActualizarTareaAsync(tareaExistente);
+
+            if (exito)
+            {
+                string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                if (int.TryParse(idUsuarioActual, out int usuarioIdInt))
+                {
+                    await VerificarYCargarMetricasAsync(usuarioIdInt);
+                }
+                StateHasChanged();
+            }
+        }
+    }
+    private void VerDetalleTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/ver-tarea/{(int)tareaId}");
+    }
+
+    private void IrAEditarTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/crear-tarea/{(int)tareaId}");
+    }
 
     private async Task EliminarTareaModalAsync(int idTarea)
     {
@@ -348,6 +424,7 @@
         public int Porcentaje { get; set; }
     }
     
+    
     private DateTime fechaInicio = DateTime.Today.AddDays(-30);
     private DateTime fechaFin = DateTime.Today;
 
@@ -368,7 +445,17 @@
 
             foreach (var reg in registrosParaExportar)
             {
-                csvContent.AppendLine($"{reg.Id};\"{reg.CategoriaId}\";\"{reg.Titulo}\";\"{reg.EstadoId}\";{reg.FechaCreacion}");
+                string nombreCategoria = categoriasDict.ContainsKey(reg.CategoriaId) ? categoriasDict[reg.CategoriaId] : "General";
+
+                string nombreEstado = reg.EstadoId switch
+                {
+                    1 => "Pendiente",
+                    2 => "En Curso",
+                    3 => "Completado",
+                    _ => "Desconocido"
+                };
+
+                csvContent.AppendLine($"{reg.Id};\"{nombreCategoria}\";\"{reg.Titulo}\";\"{nombreEstado}\";{reg.FechaCreacion}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());

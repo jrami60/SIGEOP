@@ -135,12 +135,11 @@ MainLayout
         }
         #pragma warning restore 1998
 #nullable restore
-#line (150,8)-(473,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (148,8)-(479,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 
     [Parameter]
-    public int? IdRegistro { get; set; } 
-    private string? imagenPreviewUrl;
-    private string? imagenBase64;
+    public int? IdRegistro { get; set; }
+
     private int usuarioIdActual = 0;
     private bool cargando = true;
     private bool esError = false;
@@ -159,6 +158,10 @@ MainLayout
     private string tituloTarea = "";
     private string descripcionTarea = "";
     private string prioridadTarea = "Normal";
+
+    // Variables para la evidencia fotográfica
+    private string? imagenPreviewUrl;
+    private string? imagenBase64;
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,7 +185,6 @@ MainLayout
                     o.RolUsuarioActual.Equals("administrador", StringComparison.OrdinalIgnoreCase)
                 ).ToList();
 
-                // MODIFICADO: Si estamos editando, cargamos la tarea primero para saber su organización
                 if (IdRegistro.HasValue)
                 {
                     var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync(IdRegistro.Value);
@@ -194,6 +196,15 @@ MainLayout
                         tituloTarea = tareaExistente.Titulo ?? "";
                         descripcionTarea = tareaExistente.Descripcion ?? "";
                         categoriaSeleccionadaId = tareaExistente.CategoriaId;
+                        
+                        // Recuperar foto existente al editar
+                        if (!string.IsNullOrEmpty(tareaExistente.FotoReferenciaUrl))
+                        {
+                            imagenBase64 = tareaExistente.FotoReferenciaUrl;
+                            imagenPreviewUrl = tareaExistente.FotoReferenciaUrl.StartsWith("data:") 
+                                ? tareaExistente.FotoReferenciaUrl 
+                                : $"data:image/jpeg;base64,{tareaExistente.FotoReferenciaUrl}";
+                        }
                     }
                 }
                 else if (organizacionesAdmin.Any())
@@ -219,10 +230,8 @@ MainLayout
         orgSeleccionadaId = e.Value?.ToString() ?? "";
         categoriaSeleccionadaId = 0;
         
-        // 1. Recargar las categorías de la nueva organización
         await CargarCategoriasAsync();
 
-        // 2. Cargar los usuarios miembros de esta organización específica
         if (!string.IsNullOrEmpty(orgSeleccionadaId))
         {
             usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgSeleccionadaId);
@@ -232,9 +241,7 @@ MainLayout
             usuariosOrganizacion.Clear();
         }
 
-        // 3. Limpiar la selección de usuario anterior
         usuarioAsignadoId = "";
-        
         StateHasChanged();
     }
 
@@ -255,6 +262,35 @@ MainLayout
         {
             Console.WriteLine($"Error al cargar categorías: {ex.Message}");
         }
+    }
+
+    private async Task ManejarSeleccionImagen(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                using var stream = archivo.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                var bytes = ms.ToArray();
+                imagenBase64 = Convert.ToBase64String(bytes);
+                imagenPreviewUrl = $"data:{archivo.ContentType};base64,{imagenBase64}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeFeedback = $"Error al procesar la imagen: {ex.Message}";
+            esError = true;
+        }
+    }
+
+    private void QuitarImagen()
+    {
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
     }
 
     private void AbrirModalNuevaCategoria()
@@ -305,34 +341,6 @@ MainLayout
             esError = true;
         }
     }
-    private async Task ManejarSeleccionImagen(InputFileChangeEventArgs e)
-    {
-        try
-        {
-            var archivo = e.File;
-            if (archivo != null)
-            {
-                using var stream = archivo.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-
-                var bytes = ms.ToArray();
-                imagenBase64 = Convert.ToBase64String(bytes);
-                imagenPreviewUrl = $"data:{archivo.ContentType};base64,{imagenBase64}";
-            }
-        }
-        catch (Exception ex)
-        {
-            mensajeFeedback = $"Error al procesar la imagen: {ex.Message}";
-            esError = true;
-        }
-    }
-
-    private void QuitarImagen()
-    {
-        imagenPreviewUrl = null;
-        imagenBase64 = null;
-    }
 
     private async Task GuardarTareaAsync()
     {
@@ -360,7 +368,6 @@ MainLayout
 
             if (IdRegistro.HasValue)
             {
-                // MODO EDICIÓN: Creamos el objeto con el ID existente para actualizar
                 var tareaActualizar = new Registro
                 {
                     Id = IdRegistro.Value,
@@ -376,7 +383,6 @@ MainLayout
             }
             else
             {
-                // MODO CREACIÓN: Objeto nuevo
                 var nuevaTarea = new Registro
                 {
                     Titulo = tituloTarea.Trim(),
@@ -387,7 +393,6 @@ MainLayout
                     UsuarioId = string.IsNullOrEmpty(usuarioAsignadoId) ? null : int.Parse(usuarioAsignadoId),
                     FotoReferenciaUrl = imagenBase64
                 };
-                Console.WriteLine($"VALOR SELECCIONADO EN USUARIO: '{usuarioAsignadoId}'");
 
                 resultado = await DataSvc.CrearTareaAsync(nuevaTarea);
             }
@@ -409,10 +414,9 @@ MainLayout
                 mensajeFeedback = string.Empty;
                 StateHasChanged(); 
 
-                // Si estabas editando, opcionalmente puedes redirigir de vuelta al dashboard
                 if (IdRegistro.HasValue)
                 {
-                    Navigation.NavigateTo("/dashboard"); // Ajusta la ruta de tu dashboard si es distinta
+                    Navigation.NavigateTo("/dashboard");
                 }
             }
             else
@@ -434,6 +438,8 @@ MainLayout
         descripcionTarea = "";
         prioridadTarea = "Normal";
         categoriaSeleccionadaId = 0;
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
     }
 
     private int renderKey = 0;
@@ -452,13 +458,15 @@ MainLayout
         categoriaSeleccionadaId = 0;
         prioridadTarea = "Normal";
         mensajeFeedback = string.Empty;
+        imagenPreviewUrl = null;
+        imagenBase64 = null;
         
         renderKey++; 
         StateHasChanged();
     }
 
-    private List<MiembroModel> usuariosOrganizacion = new(); // (O la clase que uses para tus usuarios)
-    private string? usuarioAsignadoId; // El ID del usuario seleccionado en el desplegable
+    private List<MiembroModel> usuariosOrganizacion = new();
+    private string? usuarioAsignadoId;
 
 #line default
 #line hidden

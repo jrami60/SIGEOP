@@ -13,7 +13,6 @@ public class MiembroModel
 
     [System.Text.Json.Serialization.JsonPropertyName("rol_en_org")]
     public string Rol { get; set; } = string.Empty;
-    
     public string Nombre => Usuario?.Nombre ?? "Sin nombre";
     public string Estado { get; set; } = "Activo";
 
@@ -28,4 +27,6 @@ public class UsuarioData
 
     [System.Text.Json.Serialization.JsonPropertyName("nombre")]
     public string Nombre { get; set; } = string.Empty;
+
+    public string? foto_url { get; set; }
 }

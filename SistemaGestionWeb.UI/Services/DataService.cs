@@ -1014,4 +1014,14 @@ public class DataService
             return false;
         }
     }
+    public async Task<UsuarioData?> ObtenerUsuarioPorIdAsync(int usuarioId)
+    {
+        return await _http.GetFromJsonAsync<UsuarioData>($"api/usuarios/{usuarioId}");
+    }
+
+    public async Task ActualizarFotoPerfilUsuarioAsync(int usuarioId, string base64)
+    {
+        var content = JsonContent.Create(new { foto_url = base64 });
+        await _http.PutAsync($"api/usuarios/{usuarioId}/foto", content);
+    }
 }

@@ -96,7 +96,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (56,8)-(106,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (56,8)-(104,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
 
     private bool collapseNavMenu = true;
     private string nombreUsuario = "";
@@ -105,16 +105,14 @@ using SistemaGestionWeb.UI.Models
     {
         try
         {
-            // Intentamos leer el nombre o el correo del usuario almacenado en localStorage
             nombreUsuario = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_nombre");
             
-            // Si no encuentra el nombre directo, puedes optar por mostrar parte del correo o una alternativa
             if (string.IsNullOrEmpty(nombreUsuario))
             {
                 string correo = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_email");
                 if (!string.IsNullOrEmpty(correo))
                 {
-                    nombreUsuario = correo.Split('@')[0]; // Toma la parte antes del @ como nombre de usuario
+                    nombreUsuario = correo.Split('@')[0]; 
                 }
             }
         }
@@ -145,7 +143,7 @@ using SistemaGestionWeb.UI.Models
             Console.WriteLine($"Error al cerrar sesión: {ex.Message}");
         }
 
-        Navigation.NavigateTo("/login", forceLoad: true);
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 
 #line default

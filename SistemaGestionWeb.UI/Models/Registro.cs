@@ -31,11 +31,26 @@ public class Registro
     [JsonPropertyName("foto_url")]
     public string? FotoUrl { get; set; }
 
+    // Mantenemos UsuarioId por si se usa en otro lado, 
+    // y agregamos IdUsuario para que case perfectamente con el formulario de programación
     [JsonPropertyName("id_usuario")]
     public int? UsuarioId { get; set; }
 
+    public int? IdUsuario 
+    { 
+        get => UsuarioId; 
+        set => UsuarioId = value; 
+    }
+
     public string? FotoReferenciaUrl { get; set; }
+
+    // --- Únicamente lo necesario para tareas programadas ---
+    [JsonPropertyName("prioridad")]
+    public string Prioridad { get; set; } = "Media";
+
+    [JsonPropertyName("tipo_tarea")]
+    public string? TipoTarea { get; set; }
+
+    [JsonPropertyName("fecha_programada")]
+    public DateTime? FechaProgramada { get; set; }
 }
-
-
-

@@ -73,14 +73,14 @@ using SistemaGestionWeb.UI.Layout
 #nullable disable
     ;
 #nullable restore
-#line (2,2)-(2,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
-using SistemaGestionWeb.UI.Services
+#line (2,2)-(2,35) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+using SistemaGestionWeb.UI.Models
 
 #nullable disable
     ;
 #nullable restore
-#line (3,2)-(3,35) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
-using SistemaGestionWeb.UI.Models
+#line (3,2)-(3,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+using SistemaGestionWeb.UI.Services
 
 #nullable disable
     ;
@@ -106,8 +106,22 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (188,8)-(471,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+#line (208,8)-(213,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
 
+
+    private async Task DescargarReporteProgramadas()
+    {
+    }
+
+#line default
+#line hidden
+#nullable disable
+
+#nullable restore
+#line (216,8)-(501,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+
+    
+    private string vistaSeleccionada = "normales";
     private bool cargando = true;
     private bool esAdminActual = false;
     private string orgActual = "";

@@ -1,34 +1,54 @@
 @page "/dashboard"
-@using SistemaGestionWeb.UI.Services
 @using SistemaGestionWeb.UI.Models
+@using SistemaGestionWeb.UI.Services
 @inject DataService DataSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box; overflow-x: hidden;">
+
+<div class="d-flex justify-content-between align-items-start align-items-md-center mb-4 flex-column flex-md-row gap-3">
     <div>
         <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">Dashboard Analítico</h2>
         <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Métricas de rendimiento y flujos de turnos en tiempo real.</p>
     </div>
-
-    <!-- Sección de Filtros de Fecha y Botón de Descarga -->
-    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; margin-top: 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-sizing: border-box; width: 100%;">
-        <div>
-            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Inicio:</label>
-            <input type="date" @bind="fechaInicio" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
-        </div>
-        <div>
-            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Fin:</label>
-            <input type="date" @bind="fechaFin" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
-        </div>
-        <div>
-            <button @onclick="DescargarReporteExcel" style="background-color: #059669; color: white; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-                <span>📥</span> Descargar Reporte (CSV)
-            </button>
-        </div>
-    </div>
     
-    <!-- Selector Dinámico de Organización -->
+    <div style="width: 100%; max-width: 220px;">
+        <select class="form-select bg-dark text-white border-secondary shadow-sm" @bind="vistaSeleccionada">
+            <option value="normales">Tareas Operativas</option>
+            <option value="programadas">Tareas Programadas</option>
+        </select>
+    </div>
+</div>
+
+<!-- Filtros de Fecha y Descarga (Únicos y compartidos para ambas vistas) -->
+<div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; margin-top: 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-sizing: border-box; width: 100%;">
+    <div>
+        <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Inicio:</label>
+        <input type="date" @bind="fechaInicio" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
+    </div>
+    <div>
+        <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Fin:</label>
+        <input type="date" @bind="fechaFin" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem;" />
+    </div>
+    <div>
+        @if (vistaSeleccionada == "normales")
+        {
+            <button @onclick="DescargarReporteExcel" style="background-color: #059669; color: white; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span>📥</span> Descargar Reporte Operativo (CSV)
+            </button>
+        }
+        else
+        {
+            <button @onclick="DescargarReporteProgramadas" style="background-color: #059669; color: white; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span>📥</span> Descargar Reporte Programadas (CSV)
+            </button>
+        }
+    </div>
+</div>
+
+@if (vistaSeleccionada == "normales")
+{
+    <!-- Selector Dinámico de Organización (Solo para tareas operativas) -->
     <div style="background-color: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; box-sizing: border-box; width: 100%;">
         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; width: 100%;">
             <span style="color: #94a3b8; font-weight: 600; font-size: 0.9rem;">Organización Activa:</span>
@@ -102,7 +122,7 @@
             </div>
         </div>
 
-       <!-- Sección de Actividad Reciente -->
+        <!-- Sección de Actividad Reciente -->
         <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; box-sizing: border-box; width: 100%; max-width: 100%;">
             <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc; word-break: break-word;">Últimos Registros Operativos</h3>
 
@@ -111,7 +131,6 @@
                 {
                     <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; box-sizing: border-box; width: 100%;">
                         
-                        <!-- Cabecera de la tarjeta (Categoría y Fecha) -->
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; width: 100%;">
                             <span style="font-weight: 700; color: #38bdf8; font-size: 0.9rem; word-break: break-word;">
                                 @if (categoriasDict.TryGetValue(tarea.CategoriaId, out var catNombre))
@@ -126,7 +145,6 @@
                             <span style="font-size: 0.8rem; color: #94a3b8; flex-shrink: 0;">@tarea.FechaCreacion.ToShortDateString()</span>
                         </div>
 
-                        <!-- Título y Estado -->
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; width: 100%;">
                             <span style="color: #f8fafc; font-size: 0.95rem; font-weight: 500; word-break: break-word; flex: 1; min-width: 120px;">@tarea.Titulo</span>
                             <div>
@@ -141,14 +159,12 @@
                             </div>
                         </div>
 
-                        <!-- Acciones (Si es admin) -->
                         @if (esAdminActual)
                         {
                             <div style="border-top: 1px solid #334155; padding-top: 0.75rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
                                 @if (tarea.EstadoId == 3)
                                 {
-                                    <!-- Botón para revisar/ver detalle antes de auditar -->
-                                    <button style="background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
+                                    <button style="background-color: rgba(56, 189, 248, 0.15); color: #38f845; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; box-sizing: border-box;" 
                                             @onclick="() => VerDetalleTarea(tarea.Id)">
                                         Ver Detalle
                                     </button>
@@ -183,9 +199,23 @@
             </div>
         </div>
     }
-</div>
+}
+else
+{
+    <DashboardTareasProg />
+}
 
 @code {
+
+    private async Task DescargarReporteProgramadas()
+    {
+    }
+}
+
+
+@code {
+    
+    private string vistaSeleccionada = "normales";
     private bool cargando = true;
     private bool esAdminActual = false;
     private string orgActual = "";
@@ -309,14 +339,16 @@
 
             if (listaRegistros != null)
             {
+                var registrosOperativos = listaRegistros.Where(r => string.IsNullOrEmpty(r.TipoTarea)).ToList();
+
                 List<Registro> registrosPermitidos;
                 if (esAdminActual)
                 {
-                    registrosPermitidos = listaRegistros.ToList();
+                    registrosPermitidos = registrosOperativos.ToList();
                 }
                 else
                 {
-                    registrosPermitidos = listaRegistros
+                    registrosPermitidos = registrosOperativos
                         .Where(r => r.UsuarioId == null || r.UsuarioId == usuarioActualId)
                         .ToList();
                 }

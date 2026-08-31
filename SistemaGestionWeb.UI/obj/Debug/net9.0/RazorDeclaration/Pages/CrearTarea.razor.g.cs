@@ -135,7 +135,7 @@ MainLayout
         }
         #pragma warning restore 1998
 #nullable restore
-#line (148,8)-(479,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
+#line (148,8)-(492,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\CrearTarea.razor"
 
     [Parameter]
     public int? IdRegistro { get; set; }
@@ -445,13 +445,25 @@ MainLayout
     private int renderKey = 0;
     
     private void Cancelar()
+{
+    if (IdRegistro.HasValue)
     {
-        if (IdRegistro.HasValue)
-        {
-            Navigation.NavigateTo("/dashboard");
-            return;
-        }
+        Navigation.NavigateTo("/dashboard");
+        return;
+    }
 
+    bool estaLimpio = string.IsNullOrEmpty(tituloTarea) &&
+                       string.IsNullOrEmpty(descripcionTarea) &&
+                       string.IsNullOrEmpty(orgSeleccionadaId) &&
+                       categoriaSeleccionadaId == 0;
+
+    if (estaLimpio)
+    {
+
+        Navigation.NavigateTo("/dashboard");
+    }
+    else
+    {
         tituloTarea = string.Empty;
         descripcionTarea = string.Empty;
         orgSeleccionadaId = string.Empty;
@@ -464,6 +476,7 @@ MainLayout
         renderKey++; 
         StateHasChanged();
     }
+}
 
     private List<MiembroModel> usuariosOrganizacion = new();
     private string? usuarioAsignadoId;

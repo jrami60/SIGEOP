@@ -44,6 +44,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Jaime Ramirez/OneDrive/Escritorio/Proyecto titulacion/SistemaGestionWeb/SistemaGestionWeb.UI/Pages/DashboardTareasProg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkVGFyZWFzUHJvZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Jaime Ramirez/OneDrive/Escritorio/Proyecto titulacion/SistemaGestionWeb/SistemaGestionWeb.UI/Pages/ForgotPassword.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRm9yZ290UGFzc3dvcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -62,6 +66,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Jaime Ramirez/OneDrive/Escritorio/Proyecto titulacion/SistemaGestionWeb/SistemaGestionWeb.UI/Pages/PerfilEquipo.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGVyZmlsRXF1aXBvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jaime Ramirez/OneDrive/Escritorio/Proyecto titulacion/SistemaGestionWeb/SistemaGestionWeb.UI/Pages/ProgramarTarea.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZ3JhbWFyVGFyZWEucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Jaime Ramirez/OneDrive/Escritorio/Proyecto titulacion/SistemaGestionWeb/SistemaGestionWeb.UI/Pages/RegistroOrganizacion.razor]

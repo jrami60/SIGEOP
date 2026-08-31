@@ -84,35 +84,20 @@ using SistemaGestionWeb.UI.Models
 
 #nullable disable
     ;
-#nullable restore
-#line (6,2)-(6,45) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
-using System.ComponentModel.DataAnnotations
-
-#nullable disable
-    ;
     #line default
     #line hidden
-    [global::Microsoft.AspNetCore.Components.LayoutAttribute(typeof(
-#nullable restore
-#line (2,9)-(2,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
-EmptyLayout
-
-#line default
-#line hidden
-#nullable disable
-    ))]
     [global::Microsoft.AspNetCore.Components.RouteAttribute(
     // language=Route,Component
 #nullable restore
-#line (1,7)-(1,10) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
-"/"
+#line (1,7)-(1,25) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+"/programar-tarea"
 
 #line default
 #line hidden
 #nullable disable
     )]
     #nullable restore
-    public partial class Login : global::Microsoft.AspNetCore.Components.ComponentBase
+    public partial class ProgramarTarea : global::Microsoft.AspNetCore.Components.ComponentBase
     #nullable disable
     {
         #pragma warning disable 1998
@@ -121,95 +106,87 @@ EmptyLayout
         }
         #pragma warning restore 1998
 #nullable restore
-#line (95,8)-(184,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (91,8)-(172,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 
-    private bool esLogin = true;
-    private string mensajeAlerta = "";
-    private bool esExito = false;
+    private Registro modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
+    private List<Organizacion> organizaciones = new();
+    private List<MiembroModel> usuariosOrganizacion = new();
+    private string organizacionSeleccionadaId = string.Empty;
+    private string usuarioActualId = string.Empty;
+    private string mensajeExito = string.Empty;
 
-    private LoginDto modeloLogin = new();
-    private RegistroDto modeloRegistro = new();
-
-    private void CambiarTab(bool login)
+    protected override async Task OnInitializedAsync()
     {
-        esLogin = login;
-        mensajeAlerta = "";
-    }
-
-    private void MostrarMensaje(string mensaje, bool exito)
-    {
-        mensajeAlerta = mensaje;
-        esExito = exito;
-        StateHasChanged();
-    }
-
-    private async Task ProcesarLogin()
-    {
-        mensajeAlerta = "";
-        var usuario = await DataSvc.ObtenerUsuarioPorEmailAsync(modeloLogin.Email);
-
-        if (usuario == null)
+        usuarioActualId = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+        
+        if (int.TryParse(usuarioActualId, out int idUsuarioInt))
         {
-            MostrarMensaje("El correo electrónico no está registrado en la base de datos.", false);
+            organizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(idUsuarioInt);
+        }
+    }
+
+    private async Task CargarUsuariosDeOrganizacion()
+    {
+        if (!string.IsNullOrEmpty(organizacionSeleccionadaId))
+        {
+            usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(organizacionSeleccionadaId);
+        }
+        else
+        {
+            usuariosOrganizacion.Clear();
+        }
+        modelo.IdUsuario = null;
+    }
+
+    private async Task GuardarTarea()
+    {
+        if (string.IsNullOrEmpty(organizacionSeleccionadaId))
+        {
+            await JS.InvokeVoidAsync("alert", "Por favor, selecciona una organización.");
             return;
         }
 
-        if (usuario.Password_hash == modeloLogin.Password)
+        try
         {
-            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_id", usuario.Id.ToString());
-            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_email", usuario.Email);
-            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_nombre", usuario.NombreCompleto);
+            modelo.OrganizacionId = organizacionSeleccionadaId;
+            modelo.TipoTarea = "programada";
+            modelo.FechaCreacion = DateTime.Now;
+
+            // AQUÍ ESTABA EL ERROR: Llamamos al método especializado que creamos para no romper el operativo
+            await DataSvc.CrearTareaProgramadaAsync(modelo);
+            
+            mensajeExito = "¡Tarea registrada con éxito!";
+            StateHasChanged();
+
+            await Task.Delay(1200);
+            Navigation.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        bool estaLimpio = string.IsNullOrEmpty(organizacionSeleccionadaId) &&
+                           string.IsNullOrEmpty(modelo.Titulo) &&
+                           string.IsNullOrEmpty(modelo.Descripcion) &&
+                           modelo.IdUsuario == null;
+
+        if (estaLimpio)
+        {
             Navigation.NavigateTo("/dashboard");
         }
         else
         {
-            MostrarMensaje("Contraseña incorrecta.", false);
+            organizacionSeleccionadaId = string.Empty;
+            usuariosOrganizacion.Clear();
+            modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
+            mensajeExito = string.Empty;
+            
+            StateHasChanged();
         }
-    }
-
-   private async Task ProcesarRegistro()
-    {
-        mensajeAlerta = "";
-
-        var usuarioExistente = await DataSvc.ObtenerUsuarioPorEmailAsync(modeloRegistro.Email);
-        if (usuarioExistente != null)
-        {
-            MostrarMensaje("Este correo electrónico ya está registrado.", false);
-            return;
-        }
-
-        bool exito = await DataSvc.RegistrarUsuarioAsync(modeloRegistro.Nombre, modeloRegistro.Email, modeloRegistro.Password);
-
-        if (exito)
-        {
-            MostrarMensaje("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", true);
-            modeloRegistro = new();
-        }
-        else
-        {
-            MostrarMensaje("Hubo un error al registrar el usuario en Supabase.", false);
-        }
-    }
-
-    public class LoginDto
-    {
-        [Required(ErrorMessage = "El email es obligatorio."), EmailAddress(ErrorMessage = "Formato de email inválido.")]
-        public string Email { get; set; } = "";
-
-        [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        public string Password { get; set; } = "";
-    }
-
-    public class RegistroDto
-    {
-        [Required(ErrorMessage = "El nombre es obligatorio.")]
-        public string Nombre { get; set; } = "";
-
-        [Required(ErrorMessage = "El email es obligatorio."), EmailAddress(ErrorMessage = "Formato inválido.")]
-        public string Email { get; set; } = "";
-
-        [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        public string Password { get; set; } = "";
     }
 
 #line default
@@ -218,7 +195,25 @@ EmptyLayout
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (5,9)-(5,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (4,9)-(4,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+DataService
+
+#line default
+#line hidden
+#nullable disable
+         
+#nullable restore
+#line (4,21)-(4,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+DataSvc
+
+#line default
+#line hidden
+#nullable disable
+         { get; set; }
+         = default!;
+        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
+#nullable restore
+#line (3,9)-(3,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 IJSRuntime
 
 #line default
@@ -226,7 +221,7 @@ IJSRuntime
 #nullable disable
          
 #nullable restore
-#line (5,20)-(5,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (3,20)-(3,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 JS
 
 #line default
@@ -236,7 +231,7 @@ JS
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (4,9)-(4,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (2,9)-(2,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 NavigationManager
 
 #line default
@@ -244,26 +239,8 @@ NavigationManager
 #nullable disable
          
 #nullable restore
-#line (4,27)-(4,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (2,27)-(2,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 Navigation
-
-#line default
-#line hidden
-#nullable disable
-         { get; set; }
-         = default!;
-        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
-#nullable restore
-#line (3,9)-(3,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
-DataService
-
-#line default
-#line hidden
-#nullable disable
-         
-#nullable restore
-#line (3,21)-(3,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
-DataSvc
 
 #line default
 #line hidden

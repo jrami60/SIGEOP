@@ -103,11 +103,9 @@
             cargando = true;
             if (!string.IsNullOrEmpty(orgParam))
             {
-                // 1. Obtenemos el ID del usuario actual
                 string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
                 int.TryParse(idUsuarioStr, out int usuarioActualId);
 
-                // 2. Verificamos si el usuario actual es administrador en esta organización
                 var miembrosOrg = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgParam);
                 var miembroActual = miembrosOrg.FirstOrDefault(m => m.IdUsuario == usuarioActualId);
                 bool esAdmin = miembroActual != null && 

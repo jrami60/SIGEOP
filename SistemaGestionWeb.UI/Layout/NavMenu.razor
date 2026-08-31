@@ -2,8 +2,18 @@
 @inject IJSRuntime JS
 
 <div class="nav-wrapper">
-    <div class="nav-header" style="flex-direction: column; align-items: flex-start; height: auto; padding-bottom: 0.5rem;">
-        <a class="brand-title" href="">Gestion De Tareas</a>
+    <div class="nav-header" style="display: flex; flex-direction: column; height: auto; padding-bottom: 0.5rem;">
+        
+        <!-- Fila superior: Título a la izquierda y Botón a la derecha -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <a class="brand-title" href="">Gestion De Tareas</a>
+            
+            <button type="button" class="navbar-toggler-btn" @onclick="ToggleNavMenu" aria-label="Toggle navigation">
+                <i class="bi @(collapseNavMenu ? "bi-list" : "bi-x-lg")"></i>
+            </button>
+        </div>
+
+        <!-- Saludo del usuario debajo, ocupando su propia línea -->
         @if (!string.IsNullOrEmpty(nombreUsuario))
         {
             <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
@@ -11,9 +21,6 @@
                 <span>Hola, <strong style="color: #e2e8f0;">@nombreUsuario</strong></span>
             </div>
         }
-        <button type="button" class="navbar-toggler-btn" @onclick="ToggleNavMenu" aria-label="Toggle navigation">
-            <i class="bi @(collapseNavMenu ? "bi-list" : "bi-x-lg")"></i>
-        </button>
     </div>
 
     <div class="nav-scrollable @(collapseNavMenu ? "collapse" : "")" @onclick="ToggleNavMenu">
@@ -22,7 +29,7 @@
                 <i class="bi bi-bar-chart-line-fill me-2"></i>
                 <span>Dashboard / Métricas</span>
             </NavLink>
-
+            
              <NavLink class="nav-item-link" href="tablero" Match="NavLinkMatch.All">
                 <i class="bi bi-kanban me-2"></i>
                 <span>Tablero de Tareas</span>
@@ -31,6 +38,11 @@
             <NavLink class="nav-item-link" href="CrearTarea">
                 <i class="bi bi-plus-circle-fill me-2"></i>
                 <span>Crear Tarea</span>
+            </NavLink>
+
+            <NavLink class="nav-item-link" href="programar-tarea">
+                <i class="bi bi-calendar-plus-fill me-2"></i>
+                <span>Tareas Programadas</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="registro-organizacion">

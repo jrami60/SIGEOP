@@ -1,0 +1,171 @@
+@page "/programar-tarea"
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject DataService DataSvc
+
+<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box; overflow-x: hidden;">
+    <div>
+        <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">Programar Nueva Tarea</h2>
+        <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Programa tareas operativas para fechas futuras y asígnalas a los miembros de tu equipo.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div style="background-color: #064e3b; border: 1px solid #059669; color: #34d399; padding: 0.85rem 1rem; border-radius: 8px; margin-top: 1rem; font-weight: 600; max-width: 800px; box-sizing: border-box;">
+            @mensajeExito
+        </div>
+    }
+
+    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.5rem; border-radius: 12px; margin-top: 1rem; box-sizing: border-box; width: 100%; max-width: 800px;">
+        
+        <!-- Organización -->
+        <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Organización (Donde eres Admin):</label>
+            <select @bind="organizacionSeleccionadaId" @bind:after="CargarUsuariosDeOrganizacion" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none;">
+                <option value="">-- Selecciona una organización --</option>
+                @if (organizaciones != null)
+                {
+                    @foreach (var org in organizaciones)
+                    {
+                        <option value="@org.Id">@org.Nombre</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <!-- Asignar a Usuario -->
+        <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Asignar a Usuario (Opcional):</label>
+            <select @bind="modelo.IdUsuario" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none;">
+                <option value="">-- Cualquiera en la organización --</option>
+                @if (usuariosOrganizacion != null)
+                {
+                    @foreach (var miembro in usuariosOrganizacion)
+                    {
+                        <option value="@miembro.IdUsuario">@miembro.Nombre</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <!-- Título -->
+        <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Título de la Tarea:</label>
+            <input type="text" @bind="modelo.Titulo" placeholder="Ej: Auditoría mensual de stock..." style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none;" />
+        </div>
+
+        <!-- Fecha y Prioridad -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 220px;">
+                <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Fecha y Hora Programada:</label>
+                <input type="datetime-local" @bind="modelo.FechaProgramada" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none;" />
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Prioridad:</label>
+                <select @bind="modelo.Prioridad" style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none;">
+                    <option value="Baja">Baja</option>
+                    <option value="Media" selected>Media</option>
+                    <option value="Alta">Alta</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Descripción -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem; font-weight: 600;">Descripción y Detalle:</label>
+            <textarea @bind="modelo.Descripcion" rows="3" placeholder="Describa los detalles de la tarea programada..." style="background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; width: 100%; box-sizing: border-box; outline: none; resize: vertical;"></textarea>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #334155; padding-top: 1.25rem;">
+            <button type="button" @onclick="Cancelar" style="background-color: transparent; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 600; cursor: pointer;">
+                Cancelar
+            </button>
+            <button type="button" @onclick="GuardarTarea" style="background-color: #38bdf8; color: #0f172a; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span>📅</span> Programar Tarea
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Registro modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
+    private List<Organizacion> organizaciones = new();
+    private List<MiembroModel> usuariosOrganizacion = new();
+    private string organizacionSeleccionadaId = string.Empty;
+    private string usuarioActualId = string.Empty;
+    private string mensajeExito = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        usuarioActualId = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+        
+        if (int.TryParse(usuarioActualId, out int idUsuarioInt))
+        {
+            organizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(idUsuarioInt);
+        }
+    }
+
+    private async Task CargarUsuariosDeOrganizacion()
+    {
+        if (!string.IsNullOrEmpty(organizacionSeleccionadaId))
+        {
+            usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(organizacionSeleccionadaId);
+        }
+        else
+        {
+            usuariosOrganizacion.Clear();
+        }
+        modelo.IdUsuario = null;
+    }
+
+    private async Task GuardarTarea()
+    {
+        if (string.IsNullOrEmpty(organizacionSeleccionadaId))
+        {
+            await JS.InvokeVoidAsync("alert", "Por favor, selecciona una organización.");
+            return;
+        }
+
+        try
+        {
+            modelo.OrganizacionId = organizacionSeleccionadaId;
+            modelo.TipoTarea = "programada";
+            modelo.FechaCreacion = DateTime.Now;
+
+            await DataSvc.CrearTareaProgramadaAsync(modelo);
+            
+            mensajeExito = "¡Tarea registrada con éxito!";
+            StateHasChanged();
+
+            await Task.Delay(1200);
+            Navigation.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        bool estaLimpio = string.IsNullOrEmpty(organizacionSeleccionadaId) &&
+                           string.IsNullOrEmpty(modelo.Titulo) &&
+                           string.IsNullOrEmpty(modelo.Descripcion) &&
+                           modelo.IdUsuario == null;
+
+        if (estaLimpio)
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            organizacionSeleccionadaId = string.Empty;
+            usuariosOrganizacion.Clear();
+            modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
+            mensajeExito = string.Empty;
+            
+            StateHasChanged();
+        }
+    }
+}

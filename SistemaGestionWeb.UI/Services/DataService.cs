@@ -39,7 +39,6 @@ public class DataService
     {
         try
         {
-            // Consulta limpia que solo pide los campos directos de la tabla intermedia sin joins complejos que fallen
             string query = $"rest/v1/usuario_organizaciones?organizacion_id=eq.{organizacionId}&select=rol_en_org,id_usuario,usuarios!id_usuario(nombre)";
             var response = await _http.GetFromJsonAsync<List<MiembroModel>>(query, _jsonOptions);
 
@@ -98,6 +97,7 @@ public class DataService
                 return false;
             }
 
+                
             var payload = new
             {
                 titulo = tarea.Titulo,
@@ -105,7 +105,8 @@ public class DataService
                 id_categoria = tarea.CategoriaId,
                 id_estado = tarea.EstadoId > 0 ? tarea.EstadoId : 1,
                 organizacion_id = tarea.OrganizacionId,
-                id_usuario = tarea.UsuarioId // <--- ¡AQUÍ ESTABA FALTANDO!
+                id_usuario = tarea.UsuarioId,
+                foto_referencia_url = tarea.FotoReferenciaUrl
             };
 
             var bodyJson = JsonSerializer.Serialize(payload);
@@ -142,7 +143,7 @@ public class DataService
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
             request.Headers.Add("Prefer", "return=representation");
 
-            var payload = new Dictionary<string, object?>
+            var payload = new Dictionary<string, object>
             {
                 { "titulo", tarea.Titulo },
                 { "descripcion", tarea.Descripcion },
@@ -822,7 +823,6 @@ public class DataService
             var payload = new { rol_en_org = nuevoRol };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            // Filtramos directamente por las columnas de la tabla intermedia
             string patchUrl = $"rest/v1/usuario_organizaciones?organizacion_id=eq.{organizacionId}&id_usuario=eq.{usuarioId}";
 
             using var patchRequest = new HttpRequestMessage(HttpMethod.Patch, patchUrl);
@@ -855,7 +855,6 @@ public class DataService
             var payload = new { rol_en_org = nuevoRol };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            // Actualizamos directo por la llave primaria 'id' de la tabla usuario_organizaciones
             string patchUrl = $"rest/v1/usuario_organizaciones?id=eq.{relacionId}";
 
             using var patchRequest = new HttpRequestMessage(HttpMethod.Patch, patchUrl);
@@ -969,7 +968,6 @@ public class DataService
     {
         try
         {
-            // Cambiado de id=eq a id_registro=eq para que coincida con tu tabla de Supabase
             string url = $"rest/v1/registros?id_registro=eq.{id}&select=*";
 
             var response = await _http.GetAsync(url);
@@ -1024,4 +1022,77 @@ public class DataService
         var content = JsonContent.Create(new { foto_url = base64 });
         await _http.PutAsync($"api/usuarios/{usuarioId}/foto", content);
     }
+
+    public async Task<bool> CrearTareaProgramadaAsync(Registro tarea)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(tarea.OrganizacionId))
+            {
+                Console.WriteLine("[Error]: Falta el ID de la organización para la tarea programada.");
+                return false;
+            }
+
+            var payload = new
+            {
+                titulo = tarea.Titulo,
+                descripcion = tarea.Descripcion,
+                id_categoria = tarea.CategoriaId > 0 ? tarea.CategoriaId : 1, 
+                id_estado = tarea.EstadoId > 0 ? tarea.EstadoId : 1,
+                organizacion_id = tarea.OrganizacionId,
+                id_usuario = tarea.UsuarioId,
+                tipo_tarea = "programada",
+                fecha_programada = tarea.FechaProgramada
+            };
+
+            var bodyJson = JsonSerializer.Serialize(payload);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, "rest/v1/registros");
+            request.Headers.Add("apikey", SupabaseKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+            request.Headers.Add("Prefer", "return=representation");
+            request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+            var response = await _http.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Error Supabase al programar tarea]: {errorContent}");
+            }
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Excepción C# Programada]: {ex.Message}");
+            return false;
+        }
+    }
+
+       public async Task<List<Registro>> ObtenerTareasProgramadasAsync(string organizacionId, DateTime fechaInicio, DateTime fechaFin)
+{
+    try
+    {
+        string inicioStr = fechaInicio.ToString("yyyy-MM-dd");
+        string finStr = fechaFin.ToString("yyyy-MM-dd");
+
+        string url = $"rest/v1/registros?organizacion_id=eq.{organizacionId}&tipo_tarea=eq.programada&fecha_programada=gte.{inicioStr}&fecha_programada=lte.{finStr}&select=*";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("apikey", SupabaseKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+
+        var response = await _http.SendAsync(request);
+        if (!response.IsSuccessStatusCode) return new List<Registro>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<Registro>>(json, _jsonOptions) ?? new List<Registro>();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Error]: {ex.Message}");
+        return new List<Registro>();
+    }
+}
 }

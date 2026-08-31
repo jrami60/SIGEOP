@@ -4,7 +4,7 @@
 #pragma warning disable 0649
 #pragma warning disable 0169
 
-namespace SistemaGestionWeb.UI.Layout
+namespace SistemaGestionWeb.UI.Pages
 {
     #line default
     using global::System;
@@ -87,7 +87,7 @@ using SistemaGestionWeb.UI.Models
     #line default
     #line hidden
     #nullable restore
-    public partial class NavMenu : global::Microsoft.AspNetCore.Components.ComponentBase
+    public partial class DashboardTareasProg : global::Microsoft.AspNetCore.Components.ComponentBase
     #nullable disable
     {
         #pragma warning disable 1998
@@ -96,55 +96,14 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (68,8)-(116,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (106,8)-(113,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 
-    private bool collapseNavMenu = true;
-    private string nombreUsuario = "";
+    private DateTime fechaInicio = DateTime.Now.AddDays(-30);
+    private DateTime fechaFin = DateTime.Now;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            nombreUsuario = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_nombre");
-            
-            if (string.IsNullOrEmpty(nombreUsuario))
-            {
-                string correo = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_email");
-                if (!string.IsNullOrEmpty(correo))
-                {
-                    nombreUsuario = correo.Split('@')[0]; 
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cargar el nombre de usuario en el menú: {ex.Message}");
-        }
-    }
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-
-    private async Task CerrarSesion()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_email");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_autenticado");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuarioActualId");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "organizacionActivaId");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_id");
-            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_nombre");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cerrar sesión: {ex.Message}");
-        }
-
-        Navigation.NavigateTo("/", forceLoad: true);
-    }
+    private int totalProgramadas = 1;
+    private int tareasActivas = 1;
+    private int tareasPausadas = 0;
 
 #line default
 #line hidden
@@ -152,25 +111,7 @@ using SistemaGestionWeb.UI.Models
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (2,9)-(2,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-IJSRuntime
-
-#line default
-#line hidden
-#nullable disable
-         
-#nullable restore
-#line (2,20)-(2,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
-JS
-
-#line default
-#line hidden
-#nullable disable
-         { get; set; }
-         = default!;
-        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
-#nullable restore
-#line (1,9)-(1,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (1,9)-(1,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 NavigationManager
 
 #line default
@@ -178,7 +119,7 @@ NavigationManager
 #nullable disable
          
 #nullable restore
-#line (1,27)-(1,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (1,27)-(1,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 Navigation
 
 #line default

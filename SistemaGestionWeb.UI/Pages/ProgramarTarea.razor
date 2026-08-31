@@ -1,11 +1,14 @@
 @page "/programar-tarea"
+@page "/programar-tarea/{id:int}"
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject DataService DataSvc
 
 <div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box; overflow-x: hidden;">
     <div>
-        <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">Programar Nueva Tarea</h2>
+        <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">
+            @(id.HasValue ? "Editar Tarea Programada" : "Programar Nueva Tarea")
+        </h2>
         <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Programa tareas operativas para fechas futuras y asígnalas a los miembros de tu equipo.</p>
     </div>
 
@@ -82,13 +85,16 @@
                 Cancelar
             </button>
             <button type="button" @onclick="GuardarTarea" style="background-color: #38bdf8; color: #0f172a; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-                <span>📅</span> Programar Tarea
+                <span>📅</span> @(id.HasValue ? "Actualizar Tarea" : "Programar Tarea")
             </button>
         </div>
     </div>
 </div>
 
 @code {
+    [Parameter]
+    public int? id { get; set; }
+
     private Registro modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
     private List<Organizacion> organizaciones = new();
     private List<MiembroModel> usuariosOrganizacion = new();
@@ -103,6 +109,25 @@
         if (int.TryParse(usuarioActualId, out int idUsuarioInt))
         {
             organizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(idUsuarioInt);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (id.HasValue && id.Value > 0)
+        {
+            var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync(id.Value);
+            if (tareaExistente != null)
+            {
+                modelo = tareaExistente;
+                organizacionSeleccionadaId = modelo.OrganizacionId ?? string.Empty;
+                
+                if (!string.IsNullOrEmpty(organizacionSeleccionadaId))
+                {
+                    usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(organizacionSeleccionadaId);
+                }
+                StateHasChanged();
+            }
         }
     }
 
@@ -131,15 +156,25 @@
         {
             modelo.OrganizacionId = organizacionSeleccionadaId;
             modelo.TipoTarea = "programada";
-            modelo.FechaCreacion = DateTime.Now;
 
-            await DataSvc.CrearTareaProgramadaAsync(modelo);
+            if (id.HasValue && id.Value > 0)
+            {
+                // Actualizar tarea existente
+                await DataSvc.ActualizarTareaAsync(modelo);
+                mensajeExito = "¡Tarea actualizada con éxito!";
+            }
+            else
+            {
+                // Crear nueva tarea
+                modelo.FechaCreacion = DateTime.Now;
+                await DataSvc.CrearTareaProgramadaAsync(modelo);
+                mensajeExito = "¡Tarea registrada con éxito!";
+            }
             
-            mensajeExito = "¡Tarea registrada con éxito!";
             StateHasChanged();
 
             await Task.Delay(1200);
-            Navigation.NavigateTo("/dashboard");
+            Navigation.NavigateTo("/tareas-programadas");
         }
         catch (Exception ex)
         {
@@ -149,23 +184,6 @@
 
     private void Cancelar()
     {
-        bool estaLimpio = string.IsNullOrEmpty(organizacionSeleccionadaId) &&
-                           string.IsNullOrEmpty(modelo.Titulo) &&
-                           string.IsNullOrEmpty(modelo.Descripcion) &&
-                           modelo.IdUsuario == null;
-
-        if (estaLimpio)
-        {
-            Navigation.NavigateTo("/dashboard");
-        }
-        else
-        {
-            organizacionSeleccionadaId = string.Empty;
-            usuariosOrganizacion.Clear();
-            modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
-            mensajeExito = string.Empty;
-            
-            StateHasChanged();
-        }
+        Navigation.NavigateTo("/tareas-programadas");
     }
 }

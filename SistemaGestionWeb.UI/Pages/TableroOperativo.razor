@@ -10,7 +10,16 @@
         <h2 style="font-weight: 800; color: #f8fafc; margin: 0;">Gestión De Tareas</h2>
         <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Seguimiento de tareas operativas y entregables del equipo.</p>
         
-        <div style="margin-top: 1rem; max-width: 350px;">
+        <!-- Selector para elegir entre Tareas Operativas y Tareas Programadas -->
+        <div style="margin-top: 0.5rem; max-width: 350px;">
+            <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Tipo de Tareas:</label>
+            <select class="form-select" @onchange="CambiarTipoVista" style="background-color: #1e293b; color: #38bdf8; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem; font-weight: 600;">
+                <option value="normales" selected="@(tipoVista == "normales")">Tareas Operativas</option>
+                <option value="programadas" selected="@(tipoVista == "programadas")">Tareas Programadas</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 0.5rem; max-width: 350px;">
             <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Organización Activa:</label>
             <select class="form-select" @onchange="CambiarOrganizacion" style="background-color: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 0.6rem;">
                 @if (listaOrganizaciones != null && listaOrganizaciones.Any())
@@ -51,9 +60,9 @@
 
         @if (listaCategorias != null)
         {
-            @foreach (var cat in listaCategorias.Where(c => listaRegistrosActuales.Any(r => r.CategoriaId == c.Id)))
+            @foreach (var cat in listaCategorias.Where(c => RegistrosFiltradosPorVista.Any(r => r.CategoriaId == c.Id)))
             {
-                int cantidadTareas = listaRegistrosActuales.Count(r => r.CategoriaId == cat.Id);
+                int cantidadTareas = RegistrosFiltradosPorVista.Count(r => r.CategoriaId == cat.Id);
                 string colorHex = string.IsNullOrEmpty(cat.ColorHex) ? "#3b82f6" : cat.ColorHex;
                 
                 <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
@@ -77,10 +86,16 @@
     private bool modoAdmin = false;
     private string organizacionSeleccionada = "";
     private int totalElementos = 0;
+    private string tipoVista = "normales";
     
     private List<Organizacion> listaOrganizaciones = new();
     private IEnumerable<Registro> listaRegistrosActuales = new List<Registro>();
     private IEnumerable<Categoria> listaCategorias = new List<Categoria>();
+
+    private IEnumerable<Registro> RegistrosFiltradosPorVista =>
+        tipoVista == "programadas"
+            ? listaRegistrosActuales.Where(r => !string.IsNullOrEmpty(r.TipoTarea))
+            : listaRegistrosActuales.Where(r => string.IsNullOrEmpty(r.TipoTarea));
 
     protected override async Task OnInitializedAsync()
     {
@@ -128,6 +143,18 @@
         }
     }
 
+    private async Task CambiarTipoVista(ChangeEventArgs e)
+    {
+        tipoVista = e.Value?.ToString() ?? "normales";
+        ActualizarConteoElementos();
+        await Task.CompletedTask;
+    }
+
+    private void ActualizarConteoElementos()
+    {
+        totalElementos = RegistrosFiltradosPorVista.Count();
+    }
+
     private async Task CargarDatosOrganizacion(string orgId)
     {
         if (string.IsNullOrEmpty(orgId)) return;
@@ -172,7 +199,7 @@
                 }
                 
                 Console.WriteLine($"[Tablero] Tareas después del filtro: {listaRegistrosActuales.Count()}");
-                totalElementos = listaRegistrosActuales.Count();
+                ActualizarConteoElementos();
             }
             else
             {
@@ -204,4 +231,4 @@
                 Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}&categoria={categoriaId}");
             }
         }
-    }
+}

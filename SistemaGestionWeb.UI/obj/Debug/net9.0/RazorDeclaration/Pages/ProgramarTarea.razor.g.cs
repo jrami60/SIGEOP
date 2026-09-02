@@ -96,6 +96,16 @@ using SistemaGestionWeb.UI.Models
 #line hidden
 #nullable disable
     )]
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (2,7)-(2,34) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+"/programar-tarea/{id:int}"
+
+#line default
+#line hidden
+#nullable disable
+    )]
     #nullable restore
     public partial class ProgramarTarea : global::Microsoft.AspNetCore.Components.ComponentBase
     #nullable disable
@@ -106,7 +116,10 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (91,8)-(172,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (94,8)-(189,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+
+    [Parameter]
+    public int? id { get; set; }
 
     private Registro modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
     private List<Organizacion> organizaciones = new();
@@ -122,6 +135,25 @@ using SistemaGestionWeb.UI.Models
         if (int.TryParse(usuarioActualId, out int idUsuarioInt))
         {
             organizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(idUsuarioInt);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (id.HasValue && id.Value > 0)
+        {
+            var tareaExistente = await DataSvc.ObtenerRegistroPorIdAsync(id.Value);
+            if (tareaExistente != null)
+            {
+                modelo = tareaExistente;
+                organizacionSeleccionadaId = modelo.OrganizacionId ?? string.Empty;
+                
+                if (!string.IsNullOrEmpty(organizacionSeleccionadaId))
+                {
+                    usuariosOrganizacion = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(organizacionSeleccionadaId);
+                }
+                StateHasChanged();
+            }
         }
     }
 
@@ -150,16 +182,25 @@ using SistemaGestionWeb.UI.Models
         {
             modelo.OrganizacionId = organizacionSeleccionadaId;
             modelo.TipoTarea = "programada";
-            modelo.FechaCreacion = DateTime.Now;
 
-            // AQUÍ ESTABA EL ERROR: Llamamos al método especializado que creamos para no romper el operativo
-            await DataSvc.CrearTareaProgramadaAsync(modelo);
+            if (id.HasValue && id.Value > 0)
+            {
+                // Actualizar tarea existente
+                await DataSvc.ActualizarTareaAsync(modelo);
+                mensajeExito = "¡Tarea actualizada con éxito!";
+            }
+            else
+            {
+                // Crear nueva tarea
+                modelo.FechaCreacion = DateTime.Now;
+                await DataSvc.CrearTareaProgramadaAsync(modelo);
+                mensajeExito = "¡Tarea registrada con éxito!";
+            }
             
-            mensajeExito = "¡Tarea registrada con éxito!";
             StateHasChanged();
 
             await Task.Delay(1200);
-            Navigation.NavigateTo("/dashboard");
+            Navigation.NavigateTo("/tareas-programadas");
         }
         catch (Exception ex)
         {
@@ -169,24 +210,7 @@ using SistemaGestionWeb.UI.Models
 
     private void Cancelar()
     {
-        bool estaLimpio = string.IsNullOrEmpty(organizacionSeleccionadaId) &&
-                           string.IsNullOrEmpty(modelo.Titulo) &&
-                           string.IsNullOrEmpty(modelo.Descripcion) &&
-                           modelo.IdUsuario == null;
-
-        if (estaLimpio)
-        {
-            Navigation.NavigateTo("/dashboard");
-        }
-        else
-        {
-            organizacionSeleccionadaId = string.Empty;
-            usuariosOrganizacion.Clear();
-            modelo = new() { FechaProgramada = DateTime.Now.AddDays(1), Prioridad = "Media" };
-            mensajeExito = string.Empty;
-            
-            StateHasChanged();
-        }
+        Navigation.NavigateTo("/tareas-programadas");
     }
 
 #line default
@@ -195,7 +219,7 @@ using SistemaGestionWeb.UI.Models
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (4,9)-(4,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (5,9)-(5,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 DataService
 
 #line default
@@ -203,7 +227,7 @@ DataService
 #nullable disable
          
 #nullable restore
-#line (4,21)-(4,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (5,21)-(5,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 DataSvc
 
 #line default
@@ -213,7 +237,7 @@ DataSvc
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (3,9)-(3,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (4,9)-(4,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 IJSRuntime
 
 #line default
@@ -221,7 +245,7 @@ IJSRuntime
 #nullable disable
          
 #nullable restore
-#line (3,20)-(3,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (4,20)-(4,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 JS
 
 #line default
@@ -231,7 +255,7 @@ JS
          = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (2,9)-(2,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (3,9)-(3,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 NavigationManager
 
 #line default
@@ -239,7 +263,7 @@ NavigationManager
 #nullable disable
          
 #nullable restore
-#line (2,27)-(2,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
+#line (3,27)-(3,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\ProgramarTarea.razor"
 Navigation
 
 #line default

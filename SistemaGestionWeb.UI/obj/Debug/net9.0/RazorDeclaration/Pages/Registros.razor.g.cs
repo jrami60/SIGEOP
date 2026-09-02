@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (89,8)-(248,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Registros.razor"
+#line (89,8)-(246,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Registros.razor"
 
     [SupplyParameterFromQuery(Name = "org")]
     private string? orgParam { get; set; }
@@ -124,11 +124,9 @@ using SistemaGestionWeb.UI.Models
             cargando = true;
             if (!string.IsNullOrEmpty(orgParam))
             {
-                // 1. Obtenemos el ID del usuario actual
                 string idUsuarioStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
                 int.TryParse(idUsuarioStr, out int usuarioActualId);
 
-                // 2. Verificamos si el usuario actual es administrador en esta organización
                 var miembrosOrg = await DataSvc.ObtenerMiembrosDeOrganizacionAsync(orgParam);
                 var miembroActual = miembrosOrg.FirstOrDefault(m => m.IdUsuario == usuarioActualId);
                 bool esAdmin = miembroActual != null && 

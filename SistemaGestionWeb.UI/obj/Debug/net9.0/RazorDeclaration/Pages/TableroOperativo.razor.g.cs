@@ -106,15 +106,21 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (76,8)-(207,5) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\TableroOperativo.razor"
+#line (85,8)-(234,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\TableroOperativo.razor"
 
     private bool modoAdmin = false;
     private string organizacionSeleccionada = "";
     private int totalElementos = 0;
+    private string tipoVista = "normales";
     
     private List<Organizacion> listaOrganizaciones = new();
     private IEnumerable<Registro> listaRegistrosActuales = new List<Registro>();
     private IEnumerable<Categoria> listaCategorias = new List<Categoria>();
+
+    private IEnumerable<Registro> RegistrosFiltradosPorVista =>
+        tipoVista == "programadas"
+            ? listaRegistrosActuales.Where(r => !string.IsNullOrEmpty(r.TipoTarea))
+            : listaRegistrosActuales.Where(r => string.IsNullOrEmpty(r.TipoTarea));
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,6 +168,18 @@ using SistemaGestionWeb.UI.Models
         }
     }
 
+    private async Task CambiarTipoVista(ChangeEventArgs e)
+    {
+        tipoVista = e.Value?.ToString() ?? "normales";
+        ActualizarConteoElementos();
+        await Task.CompletedTask;
+    }
+
+    private void ActualizarConteoElementos()
+    {
+        totalElementos = RegistrosFiltradosPorVista.Count();
+    }
+
     private async Task CargarDatosOrganizacion(string orgId)
     {
         if (string.IsNullOrEmpty(orgId)) return;
@@ -206,7 +224,7 @@ using SistemaGestionWeb.UI.Models
                 }
                 
                 Console.WriteLine($"[Tablero] Tareas después del filtro: {listaRegistrosActuales.Count()}");
-                totalElementos = listaRegistrosActuales.Count();
+                ActualizarConteoElementos();
             }
             else
             {
@@ -238,7 +256,6 @@ using SistemaGestionWeb.UI.Models
                 Navigation.NavigateTo($"/registros?org={organizacionSeleccionada}&categoria={categoriaId}");
             }
         }
-    
 
 #line default
 #line hidden

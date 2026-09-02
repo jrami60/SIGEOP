@@ -106,19 +106,7 @@ using SistemaGestionWeb.UI.Services
         }
         #pragma warning restore 1998
 #nullable restore
-#line (208,8)-(213,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
-
-
-    private async Task DescargarReporteProgramadas()
-    {
-    }
-
-#line default
-#line hidden
-#nullable disable
-
-#nullable restore
-#line (216,8)-(501,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+#line (222,8)-(603,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
 
     
     private string vistaSeleccionada = "normales";
@@ -126,6 +114,8 @@ using SistemaGestionWeb.UI.Services
     private bool esAdminActual = false;
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
+    
+    private Dictionary<int, string> usuariosDict = new();
 
     private int totalTareas = 0;
     private int tareasCompletadas = 0;
@@ -155,6 +145,7 @@ using SistemaGestionWeb.UI.Services
             }
 
             listaOrganizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+            
 
             if (listaOrganizaciones != null && listaOrganizaciones.Any())
             {
@@ -245,14 +236,16 @@ using SistemaGestionWeb.UI.Services
 
             if (listaRegistros != null)
             {
+                var registrosOperativos = listaRegistros.Where(r => string.IsNullOrEmpty(r.TipoTarea)).ToList();
+
                 List<Registro> registrosPermitidos;
                 if (esAdminActual)
                 {
-                    registrosPermitidos = listaRegistros.ToList();
+                    registrosPermitidos = registrosOperativos.ToList();
                 }
                 else
                 {
-                    registrosPermitidos = listaRegistros
+                    registrosPermitidos = registrosOperativos
                         .Where(r => r.UsuarioId == null || r.UsuarioId == usuarioActualId)
                         .ToList();
                 }
@@ -364,6 +357,7 @@ using SistemaGestionWeb.UI.Services
     private DateTime fechaInicio = DateTime.Today.AddDays(-30);
     private DateTime fechaFin = DateTime.Today;
 
+   
     private async Task DescargarReporteExcel()
     {
         try
@@ -373,11 +367,15 @@ using SistemaGestionWeb.UI.Services
             if (todosLosRegistros == null) return;
 
             var registrosParaExportar = todosLosRegistros
-                .Where(r => r.FechaCreacion >= fechaInicio && r.FechaCreacion <= fechaFin.AddDays(1))
+                .Where(r => (string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea != "programada") &&
+                            r.FechaCreacion >= fechaInicio && 
+                            r.FechaCreacion <= fechaFin.AddDays(1))
                 .ToList();
 
+            Dictionary<int, string> usuariosCache = new();
+
             var csvContent = new System.Text.StringBuilder();
-            csvContent.AppendLine("ID;Categoria;Titulo;Estado;FechaCreacion");
+            csvContent.AppendLine("ID;Categoria;Titulo;Estado;Usuario;FechaCreacion");
 
             foreach (var reg in registrosParaExportar)
             {
@@ -391,7 +389,28 @@ using SistemaGestionWeb.UI.Services
                     _ => "Desconocido"
                 };
 
-                csvContent.AppendLine($"{reg.Id};\"{nombreCategoria}\";\"{reg.Titulo}\";\"{nombreEstado}\";{reg.FechaCreacion}");
+                string tituloLimpo = (reg.Titulo ?? "").Replace("\"", "\"\"");
+                
+                string nombreUsuario = "Sin Asignar";
+                if (reg.UsuarioId.HasValue)
+                {
+                    int idUser = reg.UsuarioId.Value;
+                    if (!usuariosCache.ContainsKey(idUser))
+                    {
+                        try
+                        {
+                            var usuarioObj = await DataSvc.ObtenerUsuarioPorIdAsync(idUser);
+                            usuariosCache[idUser] = usuarioObj?.Nombre ?? $"Usuario {idUser}";
+                        }
+                        catch
+                        {
+                            usuariosCache[idUser] = $"Usuario {idUser}";
+                        }
+                    }
+                    nombreUsuario = usuariosCache[idUser];
+                }
+
+                csvContent.AppendLine($"{reg.Id};\"{nombreCategoria}\";\"{tituloLimpo}\";\"{nombreEstado}\";\"{nombreUsuario}\";{reg.FechaCreacion:yyyy-MM-dd HH:mm}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());
@@ -402,6 +421,71 @@ using SistemaGestionWeb.UI.Services
         catch (Exception ex)
         {
             Console.WriteLine($"Error al exportar: {ex.Message}");
+        }
+    }
+
+    private async Task DescargarReporteProgramadas()
+    {
+        try
+        {
+            var todosLosRegistros = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgActual);
+
+            if (todosLosRegistros == null) return;
+
+            var registrosParaExportar = todosLosRegistros
+                .Where(r => r.TipoTarea == "programada" && 
+                            r.FechaProgramada >= fechaInicio && 
+                            r.FechaProgramada <= fechaFin.AddDays(1))
+                .ToList();
+
+            Dictionary<int, string> usuariosCache = new();
+
+            var csvContent = new System.Text.StringBuilder();
+            csvContent.AppendLine("ID;Titulo;Descripcion;TipoTarea;FechaProgramada;Usuario;Estado");
+
+            foreach (var reg in registrosParaExportar)
+            {
+                string nombreEstado = reg.EstadoId switch
+                {
+                    1 => "Pendiente",
+                    2 => "En Curso",
+                    3 => "Completado",
+                    _ => "Desconocido"
+                };
+
+                string tituloLimpo = (reg.Titulo ?? "").Replace("\"", "\"\"");
+                string descLimpia = (reg.Descripcion ?? "").Replace("\"", "\"\"");
+
+                string nombreUsuario = "Sin Asignar";
+                if (reg.UsuarioId.HasValue)
+                {
+                    int idUser = reg.UsuarioId.Value;
+                    if (!usuariosCache.ContainsKey(idUser))
+                    {
+                        try
+                        {
+                            var usuarioObj = await DataSvc.ObtenerUsuarioPorIdAsync(idUser);
+                            usuariosCache[idUser] = usuarioObj?.Nombre ?? $"Usuario {idUser}";
+                        }
+                        catch
+                        {
+                            usuariosCache[idUser] = $"Usuario {idUser}";
+                        }
+                    }
+                    nombreUsuario = usuariosCache[idUser];
+                }
+
+                csvContent.AppendLine($"{reg.Id};\"{tituloLimpo}\";\"{descLimpia}\";\"{reg.TipoTarea}\";{reg.FechaProgramada:yyyy-MM-dd HH:mm};\"{nombreUsuario}\";\"{nombreEstado}\"");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent.ToString());
+            var fileName = $"Reporte_Programadas_{orgActual}_{DateTime.Now:yyyyMMdd}.csv";
+            
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, Convert.ToBase64String(bytes));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al exportar tareas programadas: {ex.Message}");
         }
     }
 

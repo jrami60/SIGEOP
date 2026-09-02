@@ -1070,29 +1070,61 @@ public class DataService
         }
     }
 
-       public async Task<List<Registro>> ObtenerTareasProgramadasAsync(string organizacionId, DateTime fechaInicio, DateTime fechaFin)
-{
-    try
+    public async Task<List<Registro>> ObtenerTareasProgramadasAsync(string organizacionId, DateTime fechaInicio, DateTime fechaFin)
     {
-        string inicioStr = fechaInicio.ToString("yyyy-MM-dd");
-        string finStr = fechaFin.ToString("yyyy-MM-dd");
+        try
+        {
+            string inicioStr = fechaInicio.ToString("yyyy-MM-dd");
+            string finStr = fechaFin.ToString("yyyy-MM-dd");
 
-        string url = $"rest/v1/registros?organizacion_id=eq.{organizacionId}&tipo_tarea=eq.programada&fecha_programada=gte.{inicioStr}&fecha_programada=lte.{finStr}&select=*";
+            string url = $"rest/v1/registros?organizacion_id=eq.{organizacionId}&tipo_tarea=eq.programada&fecha_programada=gte.{inicioStr}&fecha_programada=lte.{finStr}&select=*";
 
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("apikey", SupabaseKey);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("apikey", SupabaseKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
 
-        var response = await _http.SendAsync(request);
-        if (!response.IsSuccessStatusCode) return new List<Registro>();
+            var response = await _http.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return new List<Registro>();
 
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<Registro>>(json, _jsonOptions) ?? new List<Registro>();
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<Registro>>(json, _jsonOptions) ?? new List<Registro>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error]: {ex.Message}");
+            return new List<Registro>();
+        }
     }
-    catch (Exception ex)
+    public async Task<string> ObtenerNombreUsuarioPorIdAsync(int usuarioId)
     {
-        Console.WriteLine($"[Error]: {ex.Message}");
-        return new List<Registro>();
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"rest/v1/usuarios?id_usuario=eq.{usuarioId}&select=nombre");
+            request.Headers.Add("apikey", SupabaseKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+
+            var response = await _http.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return $"Usuario {usuarioId}";
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Array && root.GetArrayLength() > 0)
+            {
+                var primerElemento = root[0];
+                if (primerElemento.TryGetProperty("nombre", out var nombreProp))
+                {
+                    return nombreProp.GetString() ?? $"Usuario {usuarioId}";
+                }
+            }
+
+            return $"Usuario {usuarioId}";
+        }
+        catch
+        {
+            return $"Usuario {usuarioId}";
+        }
     }
-}
 }

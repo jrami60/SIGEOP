@@ -86,6 +86,16 @@ using SistemaGestionWeb.UI.Models
     ;
     #line default
     #line hidden
+    [global::Microsoft.AspNetCore.Components.RouteAttribute(
+    // language=Route,Component
+#nullable restore
+#line (1,7)-(1,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+"/tareas-programadas"
+
+#line default
+#line hidden
+#nullable disable
+    )]
     #nullable restore
     public partial class DashboardTareasProg : global::Microsoft.AspNetCore.Components.ComponentBase
     #nullable disable
@@ -96,14 +106,166 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (106,8)-(113,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (143,8)-(302,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 
-    private DateTime fechaInicio = DateTime.Now.AddDays(-30);
-    private DateTime fechaFin = DateTime.Now;
+    private bool cargando = true;
+    private string orgActual = "";
+    private List<Organizacion> listaOrganizaciones = new();
+    private List<Registro> listaProgramadas = new();
 
-    private int totalProgramadas = 1;
-    private int tareasActivas = 1;
-    private int tareasPausadas = 0;
+    private int totalProgramadas = 0;
+    private int tareasActivas = 0;
+    private int tareasCompletadasCount = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarDatosInicialesAsync();
+    }
+
+    private async Task CargarDatosInicialesAsync()
+    {
+        cargando = true;
+        try
+        {
+            string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+
+            if (string.IsNullOrEmpty(idUsuarioActual) || !int.TryParse(idUsuarioActual, out int usuarioIdInt))
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            listaOrganizaciones = await DataService.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
+
+            if (listaOrganizaciones != null && listaOrganizaciones.Any())
+            {
+                if (string.IsNullOrEmpty(orgActual) || !listaOrganizaciones.Any(o => o.Id == orgActual))
+                {
+                    orgActual = listaOrganizaciones.First().Id;
+                }
+                
+                await CargarTareasProgramadasAsync();
+            }
+            else
+            {
+                listaOrganizaciones = new List<Organizacion>();
+                orgActual = string.Empty;
+                listaProgramadas.Clear();
+                LimpiarMetricas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error Inicialización Programadas]: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CambiarOrganizacion(ChangeEventArgs e)
+    {
+        orgActual = e.Value?.ToString() ?? "";
+        if (!string.IsNullOrEmpty(orgActual))
+        {
+            await CargarTareasProgramadasAsync();
+        }
+        else
+        {
+            listaProgramadas.Clear();
+            LimpiarMetricas();
+        }
+    }
+
+    private async Task CargarTareasProgramadasAsync()
+    {
+        if (string.IsNullOrEmpty(orgActual)) return;
+
+        try
+        {
+            var todosLosRegistros = await DataService.ObtenerRegistrosActivosParaDashboardAsync(orgActual);
+
+            if (todosLosRegistros != null)
+            {
+                // Filtramos por las tareas programadas (ajusta el filtro "TipoTarea" si tu base de datos lo separa así, o quítalo si comparten la misma entidad)
+                listaProgramadas = todosLosRegistros
+                    .Where(r => !string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea == "programada") // Ajusta este filtro según tu modelo real
+                    .ToList();
+
+                totalProgramadas = listaProgramadas.Count;
+                tareasActivas = listaProgramadas.Count(r => r.EstadoId != 3);
+                tareasCompletadasCount = listaProgramadas.Count(r => r.EstadoId == 3);
+            }
+            else
+            {
+                listaProgramadas.Clear();
+                LimpiarMetricas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error al cargar tareas programadas]: {ex.Message}");
+        }
+    }
+
+    private void LimpiarMetricas()
+    {
+        totalProgramadas = 0;
+        tareasActivas = 0;
+        tareasCompletadasCount = 0;
+    }
+
+    private string ObtenerNombreOrganizacionActiva()
+    {
+        return listaOrganizaciones.FirstOrDefault(o => o.Id == orgActual)?.Nombre ?? "Desconocida";
+    }
+
+    // Métodos idénticos a tus tareas normales para guardar y navegar correctamente
+    private async Task ArchivarTareaAsync(long tareaId)
+    {
+        bool exito = await DataService.ArchivarRegistroAsync((int)tareaId);
+        if (exito)
+        {
+            await CargarTareasProgramadasAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task CambiarEstadoPendienteAsync(long tareaId)
+    {
+        var tareaExistente = await DataService.ObtenerRegistroPorIdAsync((int)tareaId);
+        if (tareaExistente != null)
+        {
+            tareaExistente.EstadoId = 1; // Pasa a pendiente/programada
+            bool exito = await DataService.ActualizarTareaAsync(tareaExistente);
+            if (exito)
+            {
+                await CargarTareasProgramadasAsync();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void VerDetalleTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/ver-tarea/{(int)tareaId}");
+    }
+
+    private void IrAEditarTarea(long tareaId)
+    {
+        Navigation.NavigateTo($"/programar-tarea/{(int)tareaId}");
+    }
+
+    private async Task EliminarTareaModalAsync(int idTarea)
+    {
+        bool exito = await DataService.EliminarTareaAsync(idTarea);
+        if (exito)
+        {
+            await CargarTareasProgramadasAsync();
+            StateHasChanged();
+        }
+    }
 
 #line default
 #line hidden
@@ -111,7 +273,43 @@ using SistemaGestionWeb.UI.Models
 
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
-#line (1,9)-(1,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (4,9)-(4,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+IJSRuntime
+
+#line default
+#line hidden
+#nullable disable
+         
+#nullable restore
+#line (4,20)-(4,22) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+JS
+
+#line default
+#line hidden
+#nullable disable
+         { get; set; }
+         = default!;
+        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
+#nullable restore
+#line (3,9)-(3,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+DataService
+
+#line default
+#line hidden
+#nullable disable
+         
+#nullable restore
+#line (3,21)-(3,32) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+DataService
+
+#line default
+#line hidden
+#nullable disable
+         { get; set; }
+         = default!;
+        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
+#nullable restore
+#line (2,9)-(2,26) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 NavigationManager
 
 #line default
@@ -119,7 +317,7 @@ NavigationManager
 #nullable disable
          
 #nullable restore
-#line (1,27)-(1,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (2,27)-(2,37) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 Navigation
 
 #line default

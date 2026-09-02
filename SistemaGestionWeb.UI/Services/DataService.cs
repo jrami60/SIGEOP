@@ -39,7 +39,7 @@ public class DataService
     {
         try
         {
-            string query = $"rest/v1/usuario_organizaciones?organizacion_id=eq.{organizacionId}&select=rol_en_org,id_usuario,usuarios!id_usuario(nombre)";
+           string query = $"rest/v1/usuario_organizaciones?organizacion_id=eq.{organizacionId}&select=rol_en_org,id_usuario,usuarios!id_usuario(nombre,foto_url)";
             var response = await _http.GetFromJsonAsync<List<MiembroModel>>(query, _jsonOptions);
 
             var listaMiembros = response ?? new List<MiembroModel>();
@@ -1019,10 +1019,23 @@ public class DataService
 
     public async Task ActualizarFotoPerfilUsuarioAsync(int usuarioId, string base64)
     {
-        var content = JsonContent.Create(new { foto_url = base64 });
-        await _http.PutAsync($"api/usuarios/{usuarioId}/foto", content);
-    }
+        var payload = new { foto_url = base64 };
+        var bodyJson = System.Text.Json.JsonSerializer.Serialize(payload);
 
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"rest/v1/usuarios?id_usuario=eq.{usuarioId}");
+        request.Headers.Add("apikey", SupabaseKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+        request.Headers.Add("Prefer", "return=minimal");
+        request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+        var response = await _http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Error Supabase ({response.StatusCode}): {errorContent}");
+        }
+    }
     public async Task<bool> CrearTareaProgramadaAsync(Registro tarea)
     {
         try

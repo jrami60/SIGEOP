@@ -1,5 +1,6 @@
 ﻿@inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject DataService DataSvc
 
 <div class="nav-wrapper">
     <div class="nav-header" style="display: flex; flex-direction: column; height: auto; padding-bottom: 0.5rem;">
@@ -13,12 +14,36 @@
             </button>
         </div>
 
-        <!-- Saludo del usuario debajo, ocupando su propia línea -->
+        <!-- Foto de perfil y saludo del usuario debajo, ocupando su propia sección centrada -->
         @if (!string.IsNullOrEmpty(nombreUsuario))
         {
-            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
-                <span>Hola, <strong style="color: #e2e8f0;">@nombreUsuario</strong></span>
+            <div style="margin-top: 0.8rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; width: 100%;">
+                
+                <!-- InputFile oculto para activar el explorador de archivos al hacer clic en la foto -->
+                <InputFile id="fileInputFoto" OnChange="CargarNuevaFoto" style="display:none" accept=".jpg, .jpeg, .png" />
+
+                <!-- Contenedor clickeable de la foto con efecto visual al pasar el mouse -->
+                <div @onclick="DispararSelectorArchivos" style="cursor: pointer; position: relative;" title="Haz clic para cambiar tu foto de perfil">
+                    @if (!string.IsNullOrEmpty(fotoUrlUsuario))
+                    {
+                        <img src="@fotoUrlUsuario" alt="Foto de perfil" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" />
+                    }
+                    else
+                    {
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background-color: #334155; color: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border: 2px solid #475569;">
+                            @nombreUsuario.Substring(0, 1).ToUpper()
+                        </div>
+                    }
+                    <!-- Pequeño ícono de cámara superpuesto para indicar que se puede cambiar -->
+                    <div style="position: absolute; bottom: 0; right: 0; background-color: #0ea5e9; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 1px solid #1e293b;">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
+                    <span>Hola, <strong style="color: #e2e8f0;">@nombreUsuario</strong></span>
+                </div>
             </div>
         }
     </div>
@@ -67,9 +92,11 @@
 
 @code {
     private bool collapseNavMenu = true;
+    private string fotoUrlUsuario = "";
     private string nombreUsuario = "";
+    private int usuarioId = 0;
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -83,10 +110,74 @@
                     nombreUsuario = correo.Split('@')[0]; 
                 }
             }
+
+            // Leemos la foto directamente del localStorage sin tocar el DataService
+            string fotoGuardada = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_foto");
+            if (!string.IsNullOrEmpty(fotoGuardada))
+            {
+                fotoUrlUsuario = fotoGuardada;
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar el nombre de usuario en el menú: {ex.Message}");
+            Console.WriteLine($"Error al cargar el usuario en el menú: {ex.Message}");
+        }
+    }
+
+    private async Task DispararSelectorArchivos()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('fileInputFoto').click();");
+    }
+
+    private async Task CargarNuevaFoto(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            Console.WriteLine($"Intentando actualizar foto. UsuarioId actual: {usuarioId}");
+
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                if (usuarioId <= 0)
+                {
+                    Console.WriteLine("¡Error crítico! usuarioId es 0 o negativo. Verificando localStorage...");
+                    string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                    if (int.TryParse(idStr, out int id))
+                    {
+                        usuarioId = id;
+                        Console.WriteLine($"¡Recuperado con éxito! Nuevo usuarioId: {usuarioId}");
+                    }
+                }
+
+                if (usuarioId > 0)
+                {
+                    var format = "image/jpeg";
+                    var archivoResized = await archivo.RequestImageFileAsync(format, 300, 300);
+
+                    using var stream = archivoResized.OpenReadStream(1024 * 1024 * 2);
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+
+                    var bytes = ms.ToArray();
+                    string base64String = $"data:{format};base64,{Convert.ToBase64String(bytes)}";
+
+                    Console.WriteLine("Enviando imagen a Supabase...");
+                    await DataSvc.ActualizarFotoPerfilUsuarioAsync(usuarioId, base64String);
+                    await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", base64String);
+                    Console.WriteLine("¡Foto guardada en Supabase con éxito!");
+
+                    fotoUrlUsuario = base64String;
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("No se pudo actualizar porque el ID de usuario sigue siendo 0.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error detallado al actualizar la foto de perfil: {ex.Message}");
         }
     }
 

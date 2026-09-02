@@ -96,12 +96,14 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (68,8)-(116,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (93,8)-(207,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
 
     private bool collapseNavMenu = true;
+    private string fotoUrlUsuario = "";
     private string nombreUsuario = "";
+    private int usuarioId = 0;
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -115,10 +117,74 @@ using SistemaGestionWeb.UI.Models
                     nombreUsuario = correo.Split('@')[0]; 
                 }
             }
+
+            // Leemos la foto directamente del localStorage sin tocar el DataService
+            string fotoGuardada = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_foto");
+            if (!string.IsNullOrEmpty(fotoGuardada))
+            {
+                fotoUrlUsuario = fotoGuardada;
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar el nombre de usuario en el menú: {ex.Message}");
+            Console.WriteLine($"Error al cargar el usuario en el menú: {ex.Message}");
+        }
+    }
+
+    private async Task DispararSelectorArchivos()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('fileInputFoto').click();");
+    }
+
+    private async Task CargarNuevaFoto(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            Console.WriteLine($"Intentando actualizar foto. UsuarioId actual: {usuarioId}");
+
+            var archivo = e.File;
+            if (archivo != null)
+            {
+                if (usuarioId <= 0)
+                {
+                    Console.WriteLine("¡Error crítico! usuarioId es 0 o negativo. Verificando localStorage...");
+                    string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+                    if (int.TryParse(idStr, out int id))
+                    {
+                        usuarioId = id;
+                        Console.WriteLine($"¡Recuperado con éxito! Nuevo usuarioId: {usuarioId}");
+                    }
+                }
+
+                if (usuarioId > 0)
+                {
+                    var format = "image/jpeg";
+                    var archivoResized = await archivo.RequestImageFileAsync(format, 300, 300);
+
+                    using var stream = archivoResized.OpenReadStream(1024 * 1024 * 2);
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+
+                    var bytes = ms.ToArray();
+                    string base64String = $"data:{format};base64,{Convert.ToBase64String(bytes)}";
+
+                    Console.WriteLine("Enviando imagen a Supabase...");
+                    await DataSvc.ActualizarFotoPerfilUsuarioAsync(usuarioId, base64String);
+                    await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", base64String);
+                    Console.WriteLine("¡Foto guardada en Supabase con éxito!");
+
+                    fotoUrlUsuario = base64String;
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("No se pudo actualizar porque el ID de usuario sigue siendo 0.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error detallado al actualizar la foto de perfil: {ex.Message}");
         }
     }
 
@@ -150,6 +216,24 @@ using SistemaGestionWeb.UI.Models
 #line hidden
 #nullable disable
 
+        [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
+#nullable restore
+#line (3,9)-(3,20) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+DataService
+
+#line default
+#line hidden
+#nullable disable
+         
+#nullable restore
+#line (3,21)-(3,28) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+DataSvc
+
+#line default
+#line hidden
+#nullable disable
+         { get; set; }
+         = default!;
         [global::Microsoft.AspNetCore.Components.InjectAttribute] private 
 #nullable restore
 #line (2,9)-(2,19) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"

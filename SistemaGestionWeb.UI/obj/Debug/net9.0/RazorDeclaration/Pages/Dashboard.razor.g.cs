@@ -106,15 +106,15 @@ using SistemaGestionWeb.UI.Services
         }
         #pragma warning restore 1998
 #nullable restore
-#line (222,8)-(603,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+#line (222,8)-(585,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
 
-    
+
     private string vistaSeleccionada = "normales";
     private bool cargando = true;
     private bool esAdminActual = false;
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
-    
+
     private Dictionary<int, string> usuariosDict = new();
 
     private int totalTareas = 0;
@@ -145,7 +145,7 @@ using SistemaGestionWeb.UI.Services
             }
 
             listaOrganizaciones = await DataSvc.ObtenerOrganizacionesPorUsuarioAsync(usuarioIdInt);
-            
+
 
             if (listaOrganizaciones != null && listaOrganizaciones.Any())
             {
@@ -153,7 +153,7 @@ using SistemaGestionWeb.UI.Services
                 {
                     orgActual = listaOrganizaciones.First().Id;
                 }
-                
+
                 await VerificarYCargarMetricasAsync(usuarioIdInt);
             }
             else
@@ -290,7 +290,7 @@ using SistemaGestionWeb.UI.Services
     private async Task ArchivarTareaAsync(long tareaId)
     {
         bool exito = await DataSvc.ArchivarRegistroAsync((int)tareaId);
-        
+
         if (exito)
         {
             string idUsuarioActual = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
@@ -352,18 +352,17 @@ using SistemaGestionWeb.UI.Services
         public int Completadas { get; set; }
         public int Porcentaje { get; set; }
     }
-    
-    
+
+
     private DateTime fechaInicio = DateTime.Today.AddDays(-30);
     private DateTime fechaFin = DateTime.Today;
 
-   
-    private async Task DescargarReporteExcel()
+
+   private async Task DescargarReporteExcel()
     {
         try
         {
             var todosLosRegistros = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgActual);
-
             if (todosLosRegistros == null) return;
 
             var registrosParaExportar = todosLosRegistros
@@ -397,15 +396,7 @@ using SistemaGestionWeb.UI.Services
                     int idUser = reg.UsuarioId.Value;
                     if (!usuariosCache.ContainsKey(idUser))
                     {
-                        try
-                        {
-                            var usuarioObj = await DataSvc.ObtenerUsuarioPorIdAsync(idUser);
-                            usuariosCache[idUser] = usuarioObj?.Nombre ?? $"Usuario {idUser}";
-                        }
-                        catch
-                        {
-                            usuariosCache[idUser] = $"Usuario {idUser}";
-                        }
+                        usuariosCache[idUser] = await DataSvc.ObtenerNombreUsuarioPorIdAsync(idUser);
                     }
                     nombreUsuario = usuariosCache[idUser];
                 }
@@ -429,7 +420,6 @@ using SistemaGestionWeb.UI.Services
         try
         {
             var todosLosRegistros = await DataSvc.ObtenerRegistrosPorOrganizacionAsync(orgActual);
-
             if (todosLosRegistros == null) return;
 
             var registrosParaExportar = todosLosRegistros
@@ -462,15 +452,7 @@ using SistemaGestionWeb.UI.Services
                     int idUser = reg.UsuarioId.Value;
                     if (!usuariosCache.ContainsKey(idUser))
                     {
-                        try
-                        {
-                            var usuarioObj = await DataSvc.ObtenerUsuarioPorIdAsync(idUser);
-                            usuariosCache[idUser] = usuarioObj?.Nombre ?? $"Usuario {idUser}";
-                        }
-                        catch
-                        {
-                            usuariosCache[idUser] = $"Usuario {idUser}";
-                        }
+                        usuariosCache[idUser] = await DataSvc.ObtenerNombreUsuarioPorIdAsync(idUser);
                     }
                     nombreUsuario = usuariosCache[idUser];
                 }

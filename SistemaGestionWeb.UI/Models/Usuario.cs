@@ -15,7 +15,7 @@ public class Usuario
     public string Nombre { get; set; } = string.Empty;
 
     public string NombreCompleto 
-    { 
+    {
         get => Nombre; 
         set => Nombre = value; 
     }
@@ -25,4 +25,7 @@ public class Usuario
 
     [JsonPropertyName("id_rol")]
     public int RolId { get; set; }
+
+    [JsonPropertyName("foto_url")]
+    public string? FotoUrl { get; set; }
 }

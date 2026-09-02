@@ -18,6 +18,8 @@ public class MiembroModel
 
     public string NombreUsuario => Nombre;
     public string RolEnOrg => Rol;
+
+    public string? FotoUrl => Usuario?.foto_url;
 }
 
 public class UsuarioData
@@ -28,5 +30,6 @@ public class UsuarioData
     [System.Text.Json.Serialization.JsonPropertyName("nombre")]
     public string Nombre { get; set; } = string.Empty;
 
+    [System.Text.Json.Serialization.JsonPropertyName("foto_url")]
     public string? foto_url { get; set; }
 }

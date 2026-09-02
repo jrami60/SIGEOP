@@ -221,9 +221,8 @@
 
             if (todosLosRegistros != null)
             {
-                // Filtramos por las tareas programadas (ajusta el filtro "TipoTarea" si tu base de datos lo separa así, o quítalo si comparten la misma entidad)
-                listaProgramadas = todosLosRegistros
-                    .Where(r => !string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea == "programada") // Ajusta este filtro según tu modelo real
+                               listaProgramadas = todosLosRegistros
+                    .Where(r => !string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea == "programada") 
                     .ToList();
 
                 totalProgramadas = listaProgramadas.Count;
@@ -254,7 +253,6 @@
         return listaOrganizaciones.FirstOrDefault(o => o.Id == orgActual)?.Nombre ?? "Desconocida";
     }
 
-    // Métodos idénticos a tus tareas normales para guardar y navegar correctamente
     private async Task ArchivarTareaAsync(long tareaId)
     {
         bool exito = await DataService.ArchivarRegistroAsync((int)tareaId);

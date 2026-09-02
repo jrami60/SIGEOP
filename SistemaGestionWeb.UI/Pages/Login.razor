@@ -129,7 +129,8 @@
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_id", usuario.Id.ToString());
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_email", usuario.Email);
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_nombre", usuario.NombreCompleto);
-            Navigation.NavigateTo("/dashboard");
+            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", usuario.FotoUrl ?? "");
+                       Navigation.NavigateTo("/dashboard");
         }
         else
         {

@@ -83,7 +83,17 @@
                                 <!-- Fila superior del miembro: Nombre y Rol -->
                                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-person-circle text-info fs-5 flex-shrink-0"></i>
+                                        <!-- Avatar con foto o inicial -->
+                                        @if (!string.IsNullOrEmpty(miembro.FotoUrl))
+                                        {
+                                            <img src="@miembro.FotoUrl" alt="Foto" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #475569; flex-shrink: 0;" />
+                                        }
+                                        else
+                                        {
+                                            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: #334155; color: #e2e8f0; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; border: 1px solid #475569; flex-shrink: 0;">
+                                                @(string.IsNullOrEmpty(miembro.NombreUsuario) ? "U" : miembro.NombreUsuario.Substring(0, 1).ToUpper())
+                                            </div>
+                                        }
                                         <strong class="text-light" style="font-size: 0.95rem; word-break: break-word;">@miembro.NombreUsuario</strong>
                                     </div>
                                     <span class="rol-badge badge @(miembro.RolEnOrg.Equals("admin", StringComparison.OrdinalIgnoreCase) ? "bg-warning text-dark fw-bold" : "bg-secondary text-light")" style="font-size: 0.75rem; padding: 0.35em 0.6em;">

@@ -4,8 +4,11 @@
 @inject IJSRuntime JS
 @inject DataService DataSvc
 
-<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box; overflow-x: hidden;">
-    <div>
+<div
+    <div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; box-sizing: border-box; overflow-x: hidden;">
+
+    <!-- Contenedor Centrado General (Ancho máximo 900px) -->
+    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; width: 100%; box-sizing: border-box;">
         <h2 style="font-weight: 800; color: #f8fafc; margin-bottom: 0.25rem; font-size: clamp(1.25rem, 4vw, 1.75rem); word-break: break-word;">
             @(id.HasValue ? "Editar Tarea Programada" : "Programar Nueva Tarea")
         </h2>
@@ -35,6 +38,7 @@
                 }
             </select>
         </div>
+     </div>    
 
         <!-- Asignar a Usuario -->
         <div style="margin-bottom: 1.25rem;">

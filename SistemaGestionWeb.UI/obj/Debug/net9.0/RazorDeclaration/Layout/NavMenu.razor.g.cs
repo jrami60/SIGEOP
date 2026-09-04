@@ -96,7 +96,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (93,8)-(207,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (93,8)-(209,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
 
     private bool collapseNavMenu = true;
     private string fotoUrlUsuario = "";
@@ -172,6 +172,8 @@ using SistemaGestionWeb.UI.Models
                     await DataSvc.ActualizarFotoPerfilUsuarioAsync(usuarioId, base64String);
                     await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", base64String);
                     Console.WriteLine("¡Foto guardada en Supabase con éxito!");
+
+                    await JS.InvokeVoidAsync("location.reload");
 
                     fotoUrlUsuario = base64String;
                     StateHasChanged();

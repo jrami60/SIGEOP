@@ -112,7 +112,7 @@ using System.Data.Common
         }
         #pragma warning restore 1998
 #nullable restore
-#line (151,8)-(322,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
+#line (161,8)-(335,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
 
     private int usuarioIdActual = 0;
     private string passwordActual = "";
@@ -255,35 +255,38 @@ using System.Data.Common
         }
     }
     private async Task QuitarFotoPerfil()
+{
+    try
     {
-        try
+        Console.WriteLine("Intentando eliminar foto.");
+
+        int idActual = 0;
+        
+        string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+        if (int.TryParse(idStr, out int parsedId))
         {
-            Console.WriteLine($"Intentando eliminar foto.");
-
-            int idActual = 0;
-            
-            string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
-            if (int.TryParse(idStr, out int parsedId))
-            {
-                idActual = parsedId;
-            }
-
-            if (idActual > 0)
-            {
-                Console.WriteLine("Enviando solicitud para limpiar foto en Supabase...");
-                await DataSvc.EliminarFotoPerfilUsuarioAsync(idActual);
-                
-                await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_foto");
-                Console.WriteLine("¡Foto eliminada con éxito!");
-
-                StateHasChanged();
-            }
+            idActual = parsedId;
         }
-        catch (Exception ex)
+
+        if (idActual > 0)
         {
-            Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
+            Console.WriteLine("Enviando solicitud para limpiar foto en Supabase...");
+            await DataSvc.EliminarFotoPerfilUsuarioAsync(idActual);
+            
+            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_foto");
+            
+            Console.WriteLine("¡Foto eliminada con éxito!");
+
+            await JS.InvokeVoidAsync("location.reload");
+
+            StateHasChanged();
         }
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
+    }
+}
 
 #line default
 #line hidden

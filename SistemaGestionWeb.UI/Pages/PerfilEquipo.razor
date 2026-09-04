@@ -52,8 +52,8 @@
     </div>
 
     <h3 class="card-title h5 fw-bold mb-3" style="color: #fbbf24; font-size: 1.1rem;">
-        <i class="bi bi-people-fill me-1"></i> Miembros por Organización
-    </h3>
+    <i class="bi bi-people-fill me-1"></i> Miembros por Organización
+</h3>
 
     @if (cargando)
     {
@@ -74,77 +74,97 @@
             var esAdminActual = org.RolUsuarioActual.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
                                 org.RolUsuarioActual.Equals("administrador", StringComparison.OrdinalIgnoreCase);
 
+            // Verificamos si esta organización está expandida (por defecto cerradas = false, o abiertas cambiando a true)
+            bool estaAbierta = organizacionesExpandidas.ContainsKey(org.IdOrganizacion) && organizacionesExpandidas[org.IdOrganizacion];
+            int totalMiembros = org.Miembros?.Count ?? 0;
+
             <div class="org-subcard mb-4 shadow-sm" style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; width: 100%; box-sizing: border-box;">
                 
                 <!-- Cabecera de la subcard (Local) -->
                 <div class="org-subcard-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary bg-dark" style="flex-wrap: wrap; gap: 0.5rem; width: 100%; box-sizing: border-box;">
-                    <h4 class="org-subcard-title h6 fw-bold text-light m-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-building text-warning fs-5"></i> 
-                        <span style="color: #f1f5f9; font-size: 1rem; word-break: break-word;">@org.NombreOrganizacion</span>
-                    </h4>
-                    <span class="rol-badge badge bg-warning text-dark fw-bold px-2.5 py-1.5 rounded-pill shadow-sm" style="font-size: 0.75rem;">
-                        Tu Rol: @org.RolUsuarioActual.ToUpper()
-                    </span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h4 class="org-subcard-title h6 fw-bold text-light m-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-building text-warning fs-5"></i> 
+                            <span style="color: #f1f5f9; font-size: 1rem; word-break: break-word;">@org.NombreOrganizacion</span>
+                        </h4>
+                        <span class="rol-badge badge bg-warning text-dark fw-bold px-2.5 py-1.5 rounded-pill shadow-sm" style="font-size: 0.75rem;">
+                            Tu Rol: @org.RolUsuarioActual.ToUpper()
+                        </span>
+                    </div>
+
+                    <!-- Botón para Ver/Ocultar Miembros con el contador -->
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted" style="font-size: 0.85rem;">👥 @totalMiembros miembro@(totalMiembros == 1 ? "" : "s")</span>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-secondary text-light px-3 py-1" 
+                                style="font-size: 0.8rem; background-color: #f9f918be; border-color: #475569;"
+                                @onclick="() => AlternarExpandido(org.IdOrganizacion)">
+                            @(estaAbierta ? "Ocultar ▲" : "Ver Miembros ▼")
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Contenedor de Miembros (Diseño Adaptativo: Tabla en PC / Bloques flexibles en Celular) -->
-                <div class="p-3" style="width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        @foreach (var miembro in org.Miembros)
-                        {
-                            <div style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 8px; padding: 1rem; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 0.75rem;">
-                                
-                                <!-- Fila superior del miembro: Nombre y Rol -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <!-- Avatar con foto o inicial -->
-                                        @if (!string.IsNullOrEmpty(miembro.FotoUrl))
+                    <!-- Contenedor de Miembros (Se muestra solo si estaAbierta es true) -->
+                    @if (estaAbierta)
+                    {
+                    <div class="p-3 animate-fade-in" style="width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            @foreach (var miembro in org.Miembros!)
+                            {
+                                <div style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 8px; padding: 1rem; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 0.75rem;">
+                                    
+                                    <!-- Fila superior del miembro: Nombre y Rol -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <!-- Avatar con foto o inicial -->
+                                            @if (!string.IsNullOrEmpty(miembro.FotoUrl))
+                                            {
+                                                <img src="@miembro.FotoUrl" alt="Foto" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #475569; flex-shrink: 0;" />
+                                            }
+                                            else
+                                            {
+                                                <div style="width: 35px; height: 35px; border-radius: 50%; background-color: #334155; color: #e2e8f0; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; border: 1px solid #475569; flex-shrink: 0;">
+                                                    @(string.IsNullOrEmpty(miembro.NombreUsuario) ? "U" : miembro.NombreUsuario.Substring(0, 1).ToUpper())
+                                                </div>
+                                            }
+                                            <strong class="text-light" style="font-size: 0.95rem; word-break: break-word;">@miembro.NombreUsuario</strong>
+                                        </div>
+                                        <span class="rol-badge badge @(miembro.RolEnOrg.Equals("admin", StringComparison.OrdinalIgnoreCase) ? "bg-warning text-dark fw-bold" : "bg-secondary text-light")" style="font-size: 0.75rem; padding: 0.35em 0.6em;">
+                                            @miembro.RolEnOrg.ToUpper()
+                                        </span>
+                                    </div>
+
+                                    <!-- Fila inferior del miembro: Acciones / Privilegios -->
+                                    <div style="border-top: 1px solid #334155; padding-top: 0.75rem; display: flex; justify-content: flex-end; align-items: center; width: 100%;">
+                                        @if (esAdminActual)
                                         {
-                                            <img src="@miembro.FotoUrl" alt="Foto" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #475569; flex-shrink: 0;" />
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
+                                                <select class="form-input-perfil form-select form-select-sm bg-dark text-light border-secondary shadow-sm" 
+                                                        style="flex: 1; min-width: 120px; max-width: 150px; height: 38px; font-size: 0.85rem; cursor: pointer;"
+                                                        value="@miembro.RolEnOrg" 
+                                                        @onchange="(e) => CambiarRolAsync(org.IdOrganizacion, miembro.IdUsuario, e)">
+                                                    <option value="miembro">Miembro</option>
+                                                    <option value="admin">Administrador</option>
+                                                </select>
+
+                                                <button class="btn btn-sm d-flex align-items-center justify-content-center gap-1 shadow-sm fw-semibold px-3" 
+                                                        style="background-color: #ef4444 !important; border-color: #ef4444 !important; color: #ffffff !important; height: 38px; font-size: 0.85rem; white-space: nowrap;"
+                                                        @onclick="() => RemoverMiembroAsync(org.IdOrganizacion, miembro.IdUsuario)">
+                                                    <i class="bi bi-person-x-fill"></i> Expulsar
+                                                </button>
+                                            </div>
                                         }
                                         else
                                         {
-                                            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: #334155; color: #e2e8f0; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; border: 1px solid #475569; flex-shrink: 0;">
-                                                @(string.IsNullOrEmpty(miembro.NombreUsuario) ? "U" : miembro.NombreUsuario.Substring(0, 1).ToUpper())
-                                            </div>
+                                            <span class="texto-atenuado text-muted small fst-italic" style="font-size: 0.8rem;">@(miembro.IdUsuario == usuarioIdActual ? "(Tú - Sin permisos de gestión)" : "Sin permisos de gestión")</span>
                                         }
-                                        <strong class="text-light" style="font-size: 0.95rem; word-break: break-word;">@miembro.NombreUsuario</strong>
                                     </div>
-                                    <span class="rol-badge badge @(miembro.RolEnOrg.Equals("admin", StringComparison.OrdinalIgnoreCase) ? "bg-warning text-dark fw-bold" : "bg-secondary text-light")" style="font-size: 0.75rem; padding: 0.35em 0.6em;">
-                                        @miembro.RolEnOrg.ToUpper()
-                                    </span>
+
                                 </div>
-
-                                <!-- Fila inferior del miembro: Acciones / Privilegios -->
-                                <div style="border-top: 1px solid #334155; padding-top: 0.75rem; display: flex; justify-content: flex-end; align-items: center; width: 100%;">
-                                    @if (esAdminActual)
-                                    {
-                                        <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
-                                            <select class="form-input-perfil form-select form-select-sm bg-dark text-light border-secondary shadow-sm" 
-                                                    style="flex: 1; min-width: 120px; max-width: 150px; height: 38px; font-size: 0.85rem; cursor: pointer;"
-                                                    value="@miembro.RolEnOrg" 
-                                                    @onchange="(e) => CambiarRolAsync(org.IdOrganizacion, miembro.IdUsuario, e)">
-                                                <option value="miembro">Miembro</option>
-                                                <option value="admin">Administrador</option>
-                                            </select>
-
-                                            <button class="btn btn-sm d-flex align-items-center justify-content-center gap-1 shadow-sm fw-semibold px-3" 
-                                                    style="background-color: #ef4444 !important; border-color: #ef4444 !important; color: #ffffff !important; height: 38px; font-size: 0.85rem; white-space: nowrap;"
-                                                    @onclick="() => RemoverMiembroAsync(org.IdOrganizacion, miembro.IdUsuario)">
-                                                <i class="bi bi-person-x-fill"></i> Expulsar
-                                            </button>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <span class="texto-atenuado text-muted small fst-italic" style="font-size: 0.8rem;">@(miembro.IdUsuario == usuarioIdActual ? "(Tú - Sin permisos de gestión)" : "Sin permisos de gestión")</span>
-                                    }
-                                </div>
-
-                            </div>
-                        }
+                            }
+                        </div>
                     </div>
-                </div>
+                }
 
             </div>
         }
@@ -332,4 +352,23 @@
         Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
     }
 }
+   // Diccionario que guarda el estado de expansión de cada organización por su ID
+    // Cambia esto:
+// private Dictionary<int, bool> organizacionesExpandidas = new();
+
+// Por esto:
+    private Dictionary<string, bool> organizacionesExpandidas = new();
+
+    private void AlternarExpandido(string orgId)
+    {
+        if (organizacionesExpandidas.ContainsKey(orgId))
+        {
+            organizacionesExpandidas[orgId] = !organizacionesExpandidas[orgId];
+        }
+        else
+        {
+            organizacionesExpandidas[orgId] = true;
+        }
+        StateHasChanged();
+    }
 }

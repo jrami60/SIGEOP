@@ -352,11 +352,7 @@
         Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
     }
 }
-   // Diccionario que guarda el estado de expansión de cada organización por su ID
-    // Cambia esto:
-// private Dictionary<int, bool> organizacionesExpandidas = new();
 
-// Por esto:
     private Dictionary<string, bool> organizacionesExpandidas = new();
 
     private void AlternarExpandido(string orgId)

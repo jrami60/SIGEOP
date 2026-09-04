@@ -13,6 +13,20 @@
         <p class="text-muted mb-0" style="font-size: 0.9rem;">Administra tu seguridad personal y los miembros asociados a tus organizaciones.</p>
     </div>
 
+    <button type="button" @onclick="QuitarFotoPerfil" class="btn-quitar" style="background-color: #334155; color: #f8fafc; border: 1px solid #475569; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s ease, background-color 0.1s ease;">
+    Quitar Foto de Perfil
+    </button>
+
+    <style>
+        .btn-quitar:active {
+            transform: scale(0.95); /* Hace que el botón se hunda sutilmente al hacer clic */
+            background-color: #1e293b !important;
+        }
+        .btn-quitar:hover {
+            background-color: #475569 !important;
+        }
+    </style>
+    
     <!-- SECCIÓN: CAMBIAR CONTRASEÑA -->
     <div class="card-panel shadow-sm mb-4" style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.25rem; width: 100%; box-sizing: border-box;">
         <h3 class="card-title h5 fw-bold mb-3" style="color: #38bdf8; font-size: 1.1rem;">
@@ -285,4 +299,37 @@
             esError = true;
         }
     }
+    private async Task QuitarFotoPerfil()
+{
+    try
+    {
+        Console.WriteLine("Intentando eliminar foto.");
+
+        int idActual = 0;
+        
+        string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+        if (int.TryParse(idStr, out int parsedId))
+        {
+            idActual = parsedId;
+        }
+
+        if (idActual > 0)
+        {
+            Console.WriteLine("Enviando solicitud para limpiar foto en Supabase...");
+            await DataSvc.EliminarFotoPerfilUsuarioAsync(idActual);
+            
+            await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_foto");
+            
+            Console.WriteLine("¡Foto eliminada con éxito!");
+
+            await JS.InvokeVoidAsync("location.reload");
+
+            StateHasChanged();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
+    }
+}
 }

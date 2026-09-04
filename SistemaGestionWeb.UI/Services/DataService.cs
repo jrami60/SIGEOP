@@ -96,8 +96,6 @@ public class DataService
                 Console.WriteLine("[Error]: No se puede crear la tarea porque falta el ID de la organización.");
                 return false;
             }
-
-                
             var payload = new
             {
                 titulo = tarea.Titulo,
@@ -1138,6 +1136,25 @@ public class DataService
         catch
         {
             return $"Usuario {usuarioId}";
+        }
+    }
+       public async Task EliminarFotoPerfilUsuarioAsync(int usuarioId)
+    {
+        var payload = new { foto_url = (string?)null };
+        var bodyJson = System.Text.Json.JsonSerializer.Serialize(payload);
+
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"rest/v1/usuarios?id_usuario=eq.{usuarioId}");
+        request.Headers.Add("apikey", SupabaseKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseKey);
+        request.Headers.Add("Prefer", "return=minimal");
+        request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+        var response = await _http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Error Supabase ({response.StatusCode}): {errorContent}");
         }
     }
 }

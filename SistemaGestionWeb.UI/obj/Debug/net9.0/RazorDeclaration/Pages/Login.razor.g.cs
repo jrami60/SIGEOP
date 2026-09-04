@@ -121,7 +121,7 @@ EmptyLayout
         }
         #pragma warning restore 1998
 #nullable restore
-#line (95,8)-(184,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
+#line (95,8)-(185,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Login.razor"
 
     private bool esLogin = true;
     private string mensajeAlerta = "";
@@ -159,7 +159,8 @@ EmptyLayout
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_id", usuario.Id.ToString());
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_email", usuario.Email);
             await JS.InvokeVoidAsync("localStorage.setItem", "usuario_nombre", usuario.NombreCompleto);
-            Navigation.NavigateTo("/dashboard");
+            await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", usuario.FotoUrl ?? "");
+                       Navigation.NavigateTo("/dashboard");
         }
         else
         {

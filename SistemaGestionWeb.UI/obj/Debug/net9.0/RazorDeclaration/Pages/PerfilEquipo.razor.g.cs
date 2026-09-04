@@ -112,7 +112,7 @@ using System.Data.Common
         }
         #pragma warning restore 1998
 #nullable restore
-#line (147,8)-(288,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
+#line (151,8)-(322,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
 
     private int usuarioIdActual = 0;
     private string passwordActual = "";
@@ -252,6 +252,36 @@ using System.Data.Common
         {
             mensajeFeedback = "No se pudo actualizar el rol.";
             esError = true;
+        }
+    }
+    private async Task QuitarFotoPerfil()
+    {
+        try
+        {
+            Console.WriteLine($"Intentando eliminar foto.");
+
+            int idActual = 0;
+            
+            string idStr = await JS.InvokeAsync<string>("localStorage.getItem", "usuario_id");
+            if (int.TryParse(idStr, out int parsedId))
+            {
+                idActual = parsedId;
+            }
+
+            if (idActual > 0)
+            {
+                Console.WriteLine("Enviando solicitud para limpiar foto en Supabase...");
+                await DataSvc.EliminarFotoPerfilUsuarioAsync(idActual);
+                
+                await JS.InvokeVoidAsync("localStorage.removeItem", "usuario_foto");
+                Console.WriteLine("¡Foto eliminada con éxito!");
+
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
         }
     }
 

@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (143,8)-(302,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (143,8)-(300,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 
     private bool cargando = true;
     private string orgActual = "";
@@ -188,9 +188,8 @@ using SistemaGestionWeb.UI.Models
 
             if (todosLosRegistros != null)
             {
-                // Filtramos por las tareas programadas (ajusta el filtro "TipoTarea" si tu base de datos lo separa así, o quítalo si comparten la misma entidad)
-                listaProgramadas = todosLosRegistros
-                    .Where(r => !string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea == "programada") // Ajusta este filtro según tu modelo real
+                               listaProgramadas = todosLosRegistros
+                    .Where(r => !string.IsNullOrEmpty(r.TipoTarea) || r.TipoTarea == "programada") 
                     .ToList();
 
                 totalProgramadas = listaProgramadas.Count;
@@ -221,7 +220,6 @@ using SistemaGestionWeb.UI.Models
         return listaOrganizaciones.FirstOrDefault(o => o.Id == orgActual)?.Nombre ?? "Desconocida";
     }
 
-    // Métodos idénticos a tus tareas normales para guardar y navegar correctamente
     private async Task ArchivarTareaAsync(long tareaId)
     {
         bool exito = await DataService.ArchivarRegistroAsync((int)tareaId);

@@ -166,6 +166,8 @@
                     await JS.InvokeVoidAsync("localStorage.setItem", "usuario_foto", base64String);
                     Console.WriteLine("¡Foto guardada en Supabase con éxito!");
 
+                    await JS.InvokeVoidAsync("location.reload");
+
                     fotoUrlUsuario = base64String;
                     StateHasChanged();
                 }

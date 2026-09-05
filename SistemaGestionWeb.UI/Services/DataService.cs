@@ -430,16 +430,25 @@ public class DataService
             var payload = new { codigo = nuevoCodigo };
             var json = System.Text.Json.JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
             var request = new HttpRequestMessage(HttpMethod.Patch, $"{SupabaseUrl}/rest/v1/organizaciones?id=eq.{idOrg}");
             request.Headers.Add("apikey", SupabaseKey);
             request.Headers.Add("Authorization", $"Bearer {SupabaseKey}");
-            request.Headers.Add("Prefer", "return=minimal");
+            request.Headers.Add("Prefer", "return=representation");
             request.Content = content;
 
             var response = await _http.SendAsync(request);
-            return response.IsSuccessStatusCode ? nuevoCodigo : string.Empty;
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return nuevoCodigo;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Error Supabase]: {errorContent}");
+                return string.Empty;
+            }
         }
         catch (Exception ex)
         {

@@ -112,7 +112,7 @@ using System.Data.Common
         }
         #pragma warning restore 1998
 #nullable restore
-#line (161,8)-(335,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
+#line (181,8)-(370,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\PerfilEquipo.razor"
 
     private int usuarioIdActual = 0;
     private string passwordActual = "";
@@ -287,6 +287,21 @@ using System.Data.Common
         Console.WriteLine($"Error al eliminar la foto: {ex.Message}");
     }
 }
+
+    private Dictionary<string, bool> organizacionesExpandidas = new();
+
+    private void AlternarExpandido(string orgId)
+    {
+        if (organizacionesExpandidas.ContainsKey(orgId))
+        {
+            organizacionesExpandidas[orgId] = !organizacionesExpandidas[orgId];
+        }
+        else
+        {
+            organizacionesExpandidas[orgId] = true;
+        }
+        StateHasChanged();
+    }
 
 #line default
 #line hidden

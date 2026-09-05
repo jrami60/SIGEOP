@@ -106,8 +106,13 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (143,8)-(300,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (142,8)-(304,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 
+    private int tareasPendientesCount => totalProgramadas - tareasCompletadasCount;
+
+    private double porcentajeCumplimientoProg => totalProgramadas > 0 
+    ? Math.Round((double)tareasCompletadasCount / totalProgramadas * 100, 1) 
+    : 0;
     private bool cargando = true;
     private string orgActual = "";
     private List<Organizacion> listaOrganizaciones = new();
@@ -235,7 +240,7 @@ using SistemaGestionWeb.UI.Models
         var tareaExistente = await DataService.ObtenerRegistroPorIdAsync((int)tareaId);
         if (tareaExistente != null)
         {
-            tareaExistente.EstadoId = 1; // Pasa a pendiente/programada
+            tareaExistente.EstadoId = 1;
             bool exito = await DataService.ActualizarTareaAsync(tareaExistente);
             if (exito)
             {

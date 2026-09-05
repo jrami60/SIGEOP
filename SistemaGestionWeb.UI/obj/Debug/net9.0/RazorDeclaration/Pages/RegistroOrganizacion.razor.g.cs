@@ -106,8 +106,9 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (134,8)-(348,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\RegistroOrganizacion.razor"
+#line (157,8)-(400,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\RegistroOrganizacion.razor"
 
+    private HashSet<string> orgsRegenerando = new();
     private bool pestanaCrear = true;
     private string nombreNuevaOrg = "";
     private string codigoIngresado = "";
@@ -279,10 +280,16 @@ using SistemaGestionWeb.UI.Models
         }
     }
 
-    private async Task RegenerarCodigoAsync(string idOrg)
+    private async Task EjecutarRegenerarCodigo(string idOrg)
     {
-        mensajeFeedback = "Se ha generado un nuevo código de invitación exitosamente.";
-        esError = false;
+        string nuevoCodigo = await DataSvc.RegenerarCodigoAsync(idOrg);
+
+        if (!string.IsNullOrEmpty(nuevoCodigo))
+        {
+            await CargarMisOrganizacionesAsync(usuarioIdActual); 
+            
+            StateHasChanged();
+        }
     }
 
     private async Task SalirDeOrganizacion(string idOrg)
@@ -321,6 +328,28 @@ using SistemaGestionWeb.UI.Models
                               (Rol.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
                                Rol.Equals("administrador", StringComparison.OrdinalIgnoreCase));
     }
+    private string? codigoCopiado;
+
+    private async Task CopiarCodigoAsync(string codigo)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", codigo);
+
+        codigoCopiado = codigo;
+        StateHasChanged();
+
+        await Task.Delay(1000);
+        codigoCopiado = null;
+        StateHasChanged();
+    }
+
+    private async Task CompartirWhatsAppAsync(string nombreOrg, string codigo)
+    {
+        var texto = $"Hola! El código de acceso a la organización *{nombreOrg}* es: *{codigo}*";
+        var url = $"https://api.whatsapp.com/send?text={Uri.EscapeDataString(texto)}";
+        
+        await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+    
 
 #line default
 #line hidden

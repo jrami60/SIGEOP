@@ -51,40 +51,33 @@
     <div class="nav-scrollable @(collapseNavMenu ? "collapse" : "")" @onclick="ToggleNavMenu">
         <nav class="flex-column nav-menu-links">
             <NavLink class="nav-item-link" href="dashboard">
-                <i class="bi bi-bar-chart-line-fill me-2"></i>
-                <span>Dashboard / Métricas</span>
+                <span>📊 Dashboard / Métricas</span>
             </NavLink>
             
              <NavLink class="nav-item-link" href="tablero" Match="NavLinkMatch.All">
-                <i class="bi bi-kanban me-2"></i>
-                <span>Tablero de Tareas</span>
+                <span>📋 Tablero de Tareas</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="CrearTarea">
-                <i class="bi bi-plus-circle-fill me-2"></i>
-                <span>Crear Tarea</span>
+                <span>➕ Crear Tarea</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="programar-tarea">
-                <i class="bi bi-calendar-plus-fill me-2"></i>
-                <span>Tareas Programadas</span>
+                <span>🗓️ Tareas Programadas</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="registro-organizacion">
-                <i class="bi bi-folder-symlink-fill me-2"></i>
-                <span>Registro / Organización</span>
+                <span>🗂️ Registro / Organización</span>
             </NavLink>
 
             <NavLink class="nav-item-link" href="perfilequipo">
-                <i class="bi bi-people-fill me-2"></i>
-                <span>Mi Perfil y Equipo</span>
+                <span>👥 Mi Perfil y Equipo</span>
             </NavLink>
 
             <div class="dropdown-divider my-2 border-secondary"></div>
 
             <a href="/" class="nav-item-link btn-logout" style="text-decoration: none; display: flex; align-items: center;" @onclick="CerrarSesion">
-                <i class="bi bi-box-arrow-right me-2"></i>
-                <span>Cerrar Sesión</span>
+                <span>🔚 Cerrar Sesión</span>
             </a>
         </nav>
     </div>

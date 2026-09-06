@@ -96,7 +96,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (93,8)-(209,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
+#line (86,8)-(202,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Layout\NavMenu.razor"
 
     private bool collapseNavMenu = true;
     private string fotoUrlUsuario = "";

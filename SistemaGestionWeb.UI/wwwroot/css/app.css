@@ -399,3 +399,18 @@ a.nav-item-link.active {
 .content-card p.text-center.fst-italic {
     color: #94a3b8 !important;
 }
+
+@keyframes slideAndZoom {
+    0% {
+        opacity: 0;
+        transform: translateX(-15px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+.tab-fade-animation {
+    animation: slideAndZoom 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

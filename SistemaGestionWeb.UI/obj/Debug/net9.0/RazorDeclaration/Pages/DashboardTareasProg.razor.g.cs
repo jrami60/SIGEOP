@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (142,8)-(304,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
+#line (142,8)-(312,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\DashboardTareasProg.razor"
 
     private int tareasPendientesCount => totalProgramadas - tareasCompletadasCount;
 
@@ -267,6 +267,14 @@ using SistemaGestionWeb.UI.Models
         {
             await CargarTareasProgramadasAsync();
             StateHasChanged();
+        }
+    }
+     protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Ilumina todo el bloque principal de arriba a abajo al cargar
+            await JS.InvokeVoidAsync("animarPestaña", "panel-dashboard-general");
         }
     }
 

@@ -3,7 +3,7 @@
 @inject NavigationManager Navigation
 @inject DataService DataSvc
 
-<div class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
+<div id="panel-tablero" class="vista-container py-4" style="max-width: 1350px; width: 100%; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;">
     
     <!-- Cabecera y Selector Dinámico de Organizaciones -->
     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -37,12 +37,7 @@
         </div>
     </div>
 
-    <!-- Checkbox Modo Administrador -->
-     <!--<div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-        <input type="checkbox" id="modoAdmin" @bind="modoAdmin" style="accent-color: #3b82f6; width: 18px; height: 18px;" />
-        <label for="modoAdmin" style="font-weight: 600; font-size: 0.9rem; cursor: pointer;">Modo Administrador</label>
-    </div>-->
-
+   
     <!-- Tarjetas de Resumen Dinámicas -->
     <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
         
@@ -147,7 +142,16 @@
     {
         tipoVista = e.Value?.ToString() ?? "normales";
         ActualizarConteoElementos();
-        await Task.CompletedTask;
+        
+        await Task.Delay(50);
+        try
+        {
+            await JS.InvokeVoidAsync("animarPestaña", "panel-tablero");
+        }
+        catch
+        {
+            // Ignora si JS se ejecuta antes de renderizar
+        }
     }
 
     private void ActualizarConteoElementos()

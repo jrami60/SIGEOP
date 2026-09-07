@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Models
         }
         #pragma warning restore 1998
 #nullable restore
-#line (157,8)-(400,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\RegistroOrganizacion.razor"
+#line (152,8)-(402,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\RegistroOrganizacion.razor"
 
     private HashSet<string> orgsRegenerando = new();
     private bool pestanaCrear = true;
@@ -290,6 +290,7 @@ using SistemaGestionWeb.UI.Models
             
             StateHasChanged();
         }
+        await JS.InvokeVoidAsync("animarElemento", $"org-card-{idOrg}");
     }
 
     private async Task SalirDeOrganizacion(string idOrg)
@@ -348,6 +349,12 @@ using SistemaGestionWeb.UI.Models
         var url = $"https://api.whatsapp.com/send?text={Uri.EscapeDataString(texto)}";
         
         await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+    private async Task CambiarPestanaAnimada(bool valor)
+    {
+        pestanaCrear = valor;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("animarPestaña", "panel-pestana-animado");
     }
     
 

@@ -1,13 +1,11 @@
 @page "/dashboard"
-@using SistemaGestionWeb.UI.Models
-@using SistemaGestionWeb.UI.Services
 @inject DataService DataSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<div style="width: 100%; box-sizing: border-box; overflow-x: hidden; padding: 0 1rem;">
+<div id="panel-dashboard-operativo" style="width: 100%; box-sizing: border-box; overflow-x: hidden; padding: 0 1rem;">
 
-    <!-- Contenedor Centrado General (Ancho máximo 900px) -->
+    <!-- Contenedor Centrado General (Ancho máximo 1350px) -->
     <div style="max-width: 1350px; margin: 1rem auto; display: flex; flex-direction: column; gap: 1rem; width: 100%; box-sizing: border-box;">
 
         <!-- Cabecera y Selector de Vista -->
@@ -18,14 +16,14 @@
             </div>
             
             <div style="width: 100%; max-width: 220px;">
-                <select class="form-select bg-dark text-white border-secondary shadow-sm" @bind="vistaSeleccionada">
+                <select class="form-select bg-dark text-white border-secondary shadow-sm" @bind="vistaSeleccionada" @bind:after="OnVistaCambiada">
                     <option value="normales">Tareas Operativas</option>
                     <option value="programadas">Tareas Programadas</option>
                 </select>
             </div>
         </div>
 
-        <!-- Filtros de Fecha y Descarga Compartidos (Ajustados para evitar desbordes) -->
+        <!-- Filtros de Fecha y Descarga Compartidos -->
         <div style="background-color: #1e293b; border: 1px solid #334155; padding: 1.25rem; border-radius: 12px; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-sizing: border-box; width: 100%;">
             <div style="flex: 1; min-width: 140px;">
                 <label style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.3rem;">Fecha Inicio:</label>
@@ -580,6 +578,31 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error al exportar tareas programadas: {ex.Message}");
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LanzarEfectoLuzAsync();
+        }
+    }
+
+    private async Task OnVistaCambiada()
+    {
+        await Task.Delay(50);
+        await LanzarEfectoLuzAsync();
+    }
+
+    private async Task LanzarEfectoLuzAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("animarPestaña", "panel-dashboard-operativo");
+        }
+        catch
+        {
+
         }
     }
 }

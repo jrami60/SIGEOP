@@ -106,7 +106,7 @@ using SistemaGestionWeb.UI.Services
         }
         #pragma warning restore 1998
 #nullable restore
-#line (222,8)-(585,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
+#line (222,8)-(610,1) "c:\Users\Jaime Ramirez\OneDrive\Escritorio\Proyecto titulacion\SistemaGestionWeb\SistemaGestionWeb.UI\Pages\Dashboard.razor"
 
 
     private string vistaSeleccionada = "normales";
@@ -468,6 +468,31 @@ using SistemaGestionWeb.UI.Services
         catch (Exception ex)
         {
             Console.WriteLine($"Error al exportar tareas programadas: {ex.Message}");
+        }
+    }
+     protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LanzarEfectoLuzAsync();
+        }
+    }
+
+    private async Task OnVistaCambiada()
+    {
+        await Task.Delay(50);
+        await LanzarEfectoLuzAsync();
+    }
+
+    private async Task LanzarEfectoLuzAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("animarPestaña", "panel-dashboard-operativo");
+        }
+        catch
+        {
+            // Ignora errores si JS se ejecuta antes de renderizar el DOM
         }
     }
 

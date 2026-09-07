@@ -123,5 +123,38 @@
             document.body.removeChild(link);
         };
     </script>
-</body>
+
+    <script>
+        window.animarElemento = function (elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.style.transition = "all 0.3s ease";
+                el.style.border = "2px solid #0284c7";
+                el.style.boxShadow = "0 0 15px rgba(2, 132, 199, 0.5)";
+                
+                setTimeout(() => {
+                    el.style.border = "";
+                    el.style.boxShadow = "";
+                }, 800); 
+            }
+        };
+    </script>
+
+    <script>
+        window.animarPestaña = function (elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.style.transition = "all 0.4s ease";
+                el.style.boxShadow = "0 0 20px rgba(2, 132, 199, 0.35)";
+                el.style.boxShadow = "0 0 20px #0284c7";
+
+                setTimeout(() => {
+                    el.style.boxShadow = "";
+                    el.style.borderColor = "";
+                }, 600);
+            }
+        };
+    </script>
+
+    </body>
 </html>

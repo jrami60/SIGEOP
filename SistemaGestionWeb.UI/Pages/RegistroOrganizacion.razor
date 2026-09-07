@@ -1,4 +1,5 @@
 @page "/registro-organizacion"
+@using global::SistemaGestionWeb.UI.Services
 @inject DataService DataSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -8,49 +9,44 @@
 
     <!-- Pestañas de Navegación -->
     <div class="d-flex mb-4" style="border-bottom: 1px solid #334155;">
-        <button style="@ObtenerEstiloPestana(pestanaCrear)" @onclick="() => pestanaCrear = true">
+        <button style="@ObtenerEstiloPestana(pestanaCrear)" @onclick="() => CambiarPestanaAnimada(true)">
             Crear Organización
         </button>
-        <button style="@ObtenerEstiloPestana(!pestanaCrear)" @onclick="() => pestanaCrear = false" class="ms-4">
+        <button style="@ObtenerEstiloPestana(!pestanaCrear)" @onclick="() => CambiarPestanaAnimada(false)" class="ms-4">
             Unirse con Código
         </button>
     </div>
 
-    @if (!string.IsNullOrEmpty(mensajeFeedback))
-    {
-        <div class="alert @(esError ? "alert-danger" : "alert-success") py-2" role="alert">
-            @mensajeFeedback
-        </div>
-    }
-
-    @if (pestanaCrear)
-    {
-        <!-- SECCIÓN CREAR ORGANIZACIÓN -->
-        <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
-            <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Registrar Nueva Organización</h5>
-            <div class="mb-3">
-                <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Nombre de la Organización</label>
-                <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="nombreNuevaOrg" placeholder="" />
+    <div id="panel-pestana-animado">
+        @if (pestanaCrear)
+        {
+            <!-- SECCIÓN CREAR ORGANIZACIÓN -->
+            <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+                <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Registrar Nueva Organización</h5>
+                <div class="mb-3">
+                    <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Nombre de la Organización</label>
+                    <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="nombreNuevaOrg" placeholder="" />
+                </div>
+                <button class="btn btn-primary w-100 py-2 font-weight-bold" style="background-color: #2563eb; border: none;" @onclick="CrearOrganizacionAsync">
+                    Registrar y Obtener Código
+                </button>
             </div>
-            <button class="btn btn-primary w-100 py-2 font-weight-bold" style="background-color: #2563eb; border: none;" @onclick="CrearOrganizacionAsync">
-                Registrar y Obtener Código
-            </button>
-        </div>
-    }
-    else
-    {
-        <!-- SECCIÓN UNIRSE CON CÓDIGO -->
-        <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
-            <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Unirse a una Organizcion Existente</h5>
-            <div class="mb-3">
-                <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Código de Invitación</label>
-                <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="codigoIngresado" placeholder="Ej. ORG-1234" />
+        }
+        else
+        {
+            <!-- SECCIÓN UNIRSE CON CÓDIGO -->
+            <div class="p-4 mb-4" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+                <h5 class="mb-3 text-white" style="font-size: 1.1rem; font-weight: 600;">Unirse a una Organizcion Existente</h5>
+                <div class="mb-3">
+                    <label class="form-label" style="color: #94a3b8; font-size: 0.9rem;">Código de Invitación</label>
+                    <input type="text" class="form-control" style="background-color: #0f172a; color: #fff; border: 1px solid #334155;" @bind="codigoIngresado" placeholder="Ej. ORG-1234" />
+                </div>
+                <button class="btn btn-success w-100 py-2 font-weight-bold" @onclick="UnirseConCodigoAsync">
+                    Enviar Solicitud de Ingreso
+                </button>
             </div>
-            <button class="btn btn-success w-100 py-2 font-weight-bold" @onclick="UnirseConCodigoAsync">
-                Enviar Solicitud de Ingreso
-            </button>
-        </div>
-    }
+        }
+    </div>
 
     <!-- SECCIÓN DE SOLICITUDES PENDIENTES (Visible solo si administra locales con solicitudes) -->
     @if (solicitudesPendientes != null && solicitudesPendientes.Any())
@@ -98,7 +94,7 @@
     {
         @foreach (var org in misOrganizaciones)
         {
-            <div class="p-3 mb-3" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
+            <div class="p-3 mb-3" id="@($"org-card-{org.Id}")" style="background-color: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 12px;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     
                     <!-- Lado Izquierdo: Nombre, Código y Botones de Copiar/WhatsApp -->
@@ -337,6 +333,7 @@
             
             StateHasChanged();
         }
+        await JS.InvokeVoidAsync("animarElemento", $"org-card-{idOrg}");
     }
 
     private async Task SalirDeOrganizacion(string idOrg)
@@ -395,6 +392,12 @@
         var url = $"https://api.whatsapp.com/send?text={Uri.EscapeDataString(texto)}";
         
         await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+    private async Task CambiarPestanaAnimada(bool valor)
+    {
+        pestanaCrear = valor;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("animarPestaña", "panel-pestana-animado");
     }
     
 }

@@ -44,6 +44,14 @@
                 <button class="btn btn-success w-100 py-2 font-weight-bold" @onclick="UnirseConCodigoAsync">
                     Enviar Solicitud de Ingreso
                 </button>
+
+                @if (!string.IsNullOrEmpty(mensajeFeedback))
+                    {
+                        <div class="alert @(esError ? "alert-danger" : "alert-success") mt-3 mb-0 py-2" role="alert" style="font-size: 0.9rem;">
+                            @mensajeFeedback
+                        </div>
+                    }
+                
             </div>
         }
     </div>
